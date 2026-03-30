@@ -38,10 +38,18 @@ namespace RU.Uncio.EventsAPI.Controllers
         }
 
         [HttpPut("{id:Guid}")]
-        public IActionResult ReplaceEvent(Guid id, [FromBody] Event ev)
+        public IActionResult ReplaceEvent(Guid id, [FromBody] EventDTO ev)
         {
-            eventsService.ReplaceEvent(id, ev);
-            return NoContent();
+            try
+            {
+                var newEvent = new Event(ev.Id, ev.Title, ev.StartAt, ev.EndAt) { Description = ev.Description };
+                eventsService.ReplaceEvent(id, newEvent);
+                return NoContent();
+            }
+            catch (ArgumentException)
+            {
+                return BadRequest();
+            }           
         }
 
         [HttpDelete("{id:Guid}")]

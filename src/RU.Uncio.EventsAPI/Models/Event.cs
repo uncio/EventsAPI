@@ -18,7 +18,7 @@ namespace RU.Uncio.EventsAPI.Models
             StartAt = starts;
             EndAt = ends;
 
-            if(StartAt.ToUniversalTime() > EndAt.ToUniversalTime())
+            if(!EndAt.IsStrictlyGreaterThan(StartAt))
             {
                 throw new ArgumentException();
             }

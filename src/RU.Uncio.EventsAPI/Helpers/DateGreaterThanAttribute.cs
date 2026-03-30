@@ -18,7 +18,7 @@ namespace RU.Uncio.EventsAPI.Helpers
 
             DateTime laterDate = (DateTime)validationContext.ObjectType.GetProperty(DateToCompareToFieldName).GetValue(validationContext.ObjectInstance, null);
 
-            if (laterDate.ToUniversalTime() > earlierDate.ToUniversalTime())
+            if (laterDate.IsStrictlyGreaterThan(earlierDate))
             {
                 return ValidationResult.Success;
             }
