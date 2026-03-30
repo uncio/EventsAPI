@@ -1,4 +1,7 @@
-﻿namespace RU.Uncio.EventsAPI.Models
+﻿using RU.Uncio.EventsAPI.Helpers;
+using System.ComponentModel.DataAnnotations;
+
+namespace RU.Uncio.EventsAPI.Models
 {
     public class Event
     {
@@ -7,5 +10,18 @@
         public string Description { get; set; }
         public DateTime StartAt { get; set; }
         public DateTime EndAt { get; set; }
+
+        public Event(Guid id, string title, DateTime starts, DateTime ends)
+        {
+            Id = id;
+            Title = title;
+            StartAt = starts;
+            EndAt = ends;
+
+            if(StartAt.ToUniversalTime() > EndAt.ToUniversalTime())
+            {
+                throw new ArgumentException();
+            }
+        }
     }
 }

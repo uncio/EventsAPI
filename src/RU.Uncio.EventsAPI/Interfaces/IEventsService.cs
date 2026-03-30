@@ -1,4 +1,5 @@
-﻿using RU.Uncio.EventsAPI.Models;
+﻿using RU.Uncio.EventsAPI.DTO;
+using RU.Uncio.EventsAPI.Models;
 
 namespace RU.Uncio.EventsAPI.Interfaces
 {

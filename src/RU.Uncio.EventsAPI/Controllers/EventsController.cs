@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RU.Uncio.EventsAPI.DTO;
 using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Models;
 
@@ -21,24 +22,33 @@ namespace RU.Uncio.EventsAPI.Controllers
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody] Event ev)
+        public IActionResult CreateEvent([FromBody] EventDTO ev)
         {
-            eventsService.AddEvent(ev);
-            return new CreatedResult();
+            try
+            {
+                var newEvent = new Event(ev.Id, ev.Title, ev.StartAt, ev.EndAt) { Description = ev.Description };
+                eventsService.AddEvent(newEvent);
+                return CreatedAtAction(nameof(CreateEvent), newEvent);
+            }
+            catch(ArgumentException)
+            {
+                return BadRequest();
+            }
+            
         }
 
         [HttpPut("{id:Guid}")]
-        public IActionResult Put(Guid id, [FromBody] Event ev)
+        public IActionResult ReplaceEvent(Guid id, [FromBody] Event ev)
         {
             eventsService.ReplaceEvent(id, ev);
-            return new NoContentResult();
+            return NoContent();
         }
 
         [HttpDelete("{id:Guid}")]
-        public IActionResult Delete(Guid id)
+        public IActionResult DeleteEvent(Guid id)
         {
             eventsService.RemoveEvent(id);
-            return new OkResult();
+            return Ok();
         }
     }
 }
