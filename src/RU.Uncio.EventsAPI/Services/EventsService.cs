@@ -57,7 +57,7 @@ namespace RU.Uncio.EventsAPI.Services
         /// <exception cref="IndexOutOfRangeException"></exception>
         public void ReplaceEvent(Guid id, Event ev)
         {
-            if (Events.TryGetValue(id, out Event existingEvent))
+            if (Events.TryGetValue(id, out _))
             {
                 Events[id] = ev;
             }

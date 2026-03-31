@@ -6,6 +6,10 @@ using System.Net;
 
 namespace RU.Uncio.EventsAPI.Controllers
 {
+    /// <summary>
+    /// Events controller
+    /// </summary>
+    /// <param name="eventsService"></param>
     [ApiController]
     [Route("api/[controller]")]
     public class EventsController(IEventsService eventsService) : ControllerBase
@@ -169,7 +173,6 @@ namespace RU.Uncio.EventsAPI.Controllers
         /// <response code="204">JSON-schema is returned of ApiResult with detailed responce
         /// and HTTP status-code 204 NoContent in case of success</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
-        [Consumes("application/json")]
         [HttpDelete("{id:Guid}")]
         public ApiResult DeleteEvent(Guid id)
         {

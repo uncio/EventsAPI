@@ -25,7 +25,7 @@ namespace RU.Uncio.EventsAPI.DTO
         /// Event starts at
         /// </summary>
         [Required]
-        [DateGreaterThanAttribute("EndAt")]
+        [DateGreaterThan("EndAt")]
         public DateTime StartAt { get; set; }
         /// <summary>
         /// Event ends at
