@@ -59,6 +59,8 @@ namespace RU.Uncio.EventsAPI.Services
         {
             if (Events.TryGetValue(id, out _))
             {
+                if (ev.Id != id)
+                    throw new ArgumentException("Input id doesn't correspond event id");
                 Events[id] = ev;
             }
             else
