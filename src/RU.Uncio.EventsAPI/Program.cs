@@ -1,3 +1,4 @@
+using Microsoft.OpenApi;
 using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Services;
 using System.Reflection;
@@ -15,6 +16,8 @@ builder.Services.AddSwaggerGen(options =>
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     options.IncludeXmlComments(xmlPath);
+
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Events API V1", Version = "v1" });
 });
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
@@ -22,6 +25,7 @@ builder.Services.AddControllers()
         // Эта опция отключает автоматическую проверку валидации 
         options.SuppressModelStateInvalidFilter = true;
     });
+builder.Services.AddApiVersioning();
 
 var app = builder.Build();
 
@@ -29,7 +33,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Events API V1");
+    });
 }
 
 app.UseHttpsRedirection();

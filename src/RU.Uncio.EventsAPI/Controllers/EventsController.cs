@@ -9,7 +9,9 @@ namespace RU.Uncio.EventsAPI.Controllers
     /// <summary>
     /// Events controller
     /// </summary>
-    /// <param name="eventsService"></param>
+    /// <param name="eventsService">Constructor with service</param>
+    [ApiVersion("1.0")]
+    [ApiExplorerSettings(GroupName = "v1")]
     [ApiController]
     [Route("api/[controller]")]
     public class EventsController(IEventsService eventsService) : ControllerBase
