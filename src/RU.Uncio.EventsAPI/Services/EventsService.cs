@@ -28,7 +28,7 @@ namespace RU.Uncio.EventsAPI.Services
                 Events[ev.Id] = ev;
             else
             {
-                throw new IndexOutOfRangeException();
+                throw new ArgumentException($"Event with ID {ev.Id} already exists in the collection");
             }
         }
 

@@ -7,7 +7,7 @@ namespace RU.Uncio.EventsAPI.Models
     {
         public Guid Id { get; set; }
         public string Title { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
         public DateTime StartAt { get; set; }
         public DateTime EndAt { get; set; }
 
@@ -20,7 +20,7 @@ namespace RU.Uncio.EventsAPI.Models
 
             if(!EndAt.IsStrictlyGreaterThan(StartAt))
             {
-                throw new ArgumentException();
+                throw new ArgumentException("Event end time is to be later than start time");
             }
         }
     }

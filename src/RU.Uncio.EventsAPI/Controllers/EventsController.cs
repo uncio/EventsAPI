@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RU.Uncio.EventsAPI.DTO;
+using RU.Uncio.EventsAPI.Helpers;
 using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Models;
+using System.Net;
 
 namespace RU.Uncio.EventsAPI.Controllers
 {
@@ -10,53 +12,126 @@ namespace RU.Uncio.EventsAPI.Controllers
     public class EventsController(IEventsService eventsService) : ControllerBase
     {
         [HttpGet]
-        public ActionResult<List<Event>> GetAllEvents()
+        public ApiResult<List<Event>> GetAllEvents()
         {
-            return eventsService.GetEvents();
+            return new ApiResult<List<Event>>
+            {
+                Data = eventsService.GetEvents(),
+                Success = true,
+                StatusCode = HttpStatusCode.OK,
+                Message = "Gettin all events from collection"
+            };
         }
 
         [HttpGet("{id:Guid}")]
-        public ActionResult<Event> GetBuildingByIndex(Guid id)
+        public ApiBaseResult GetBuildingByIndex(Guid id)
         {
-            return eventsService.GetEvent(id);
+            var result = eventsService.GetEvent(id);
+
+            if(result != null)
+            {
+                return new ApiResult<Event>
+                {
+                    Data = eventsService.GetEvent(id),
+                    Success = true,
+                    StatusCode = HttpStatusCode.OK,
+                    Message = $"Getting event with ID {id} from collection"
+                };
+            }
+            else
+            {
+                return new ApiResult
+                {
+                    Success = false,
+                    StatusCode = HttpStatusCode.NotFound,
+                    Message = $"Event with ID {id} is not found in the collection"
+                };
+            }
         }
 
         [HttpPost]
-        public IActionResult CreateEvent([FromBody] EventDTO ev)
+        public ApiResult CreateEvent([FromBody] EventDTO ev)
         {
             try
             {
                 var newEvent = new Event(ev.Id, ev.Title, ev.StartAt, ev.EndAt) { Description = ev.Description };
                 eventsService.AddEvent(newEvent);
-                return CreatedAtAction(nameof(CreateEvent), newEvent);
+
+                return new ApiResult
+                {
+                    Success = true,
+                    StatusCode = HttpStatusCode.Created,
+                    Message = "Adding the event to the collection"
+                };
             }
-            catch(ArgumentException)
+            catch(ArgumentException ex)
             {
-                return BadRequest();
-            }
-            
+                return new ApiResult
+                {
+                    Success = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    Message = ex.Message
+                };
+            }            
         }
 
         [HttpPut("{id:Guid}")]
-        public IActionResult ReplaceEvent(Guid id, [FromBody] EventDTO ev)
+        public ApiResult ReplaceEvent(Guid id, [FromBody] EventDTO ev)
         {
             try
             {
                 var newEvent = new Event(ev.Id, ev.Title, ev.StartAt, ev.EndAt) { Description = ev.Description };
                 eventsService.ReplaceEvent(id, newEvent);
-                return NoContent();
-            }
-            catch (ArgumentException)
+                return new ApiResult
+                {
+                    Success = true,
+                    StatusCode = HttpStatusCode.NoContent,
+                    Message = $"Replacing the event by ID {ev.Id}"
+                };
+            }            
+            catch (ArgumentException ex)
             {
-                return BadRequest();
-            }           
+                return new ApiResult
+                {
+                    Success = false,
+                    StatusCode = HttpStatusCode.BadRequest,
+                    Message = ex.Message
+                };
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return new ApiResult
+                {
+                    Success = false,
+                    StatusCode = HttpStatusCode.NotFound,
+                    Message = $"Event with ID {id} is not found in the collection"
+                };
+            }
         }
 
         [HttpDelete("{id:Guid}")]
-        public IActionResult DeleteEvent(Guid id)
+        public ApiResult DeleteEvent(Guid id)
         {
-            eventsService.RemoveEvent(id);
-            return Ok();
+            try
+            {
+                eventsService.RemoveEvent(id);
+                return new ApiResult
+                {
+                    Success = true,
+                    StatusCode = HttpStatusCode.NoContent,
+                    Message = $"Deleting event with ID {id}"
+                };
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return new ApiResult
+                {
+                    Success = false,
+                    StatusCode = HttpStatusCode.NotFound,
+                    Message = $"Event with ID {id} is not found in the collection"
+                };
+            }
+            
         }
     }
 }
