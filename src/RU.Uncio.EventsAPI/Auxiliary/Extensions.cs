@@ -1,4 +1,4 @@
-﻿namespace RU.Uncio.EventsAPI.Helpers
+﻿namespace RU.Uncio.EventsAPI
 {
     internal static class Extensions
     {

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace RU.Uncio.EventsAPI.Helpers
+namespace RU.Uncio.EventsAPI
 {
     [AttributeUsage(AttributeTargets.Property)]
     public class DateGreaterThanAttribute : ValidationAttribute
