@@ -25,11 +25,21 @@ namespace RU.Uncio.EventsAPI
         /// <param name="value"></param>
         /// <param name="validationContext"></param>
         /// <returns></returns>
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
         {
+            if (value == null)
+            {
+                return new ValidationResult($"Date cann't be null");
+            }
             DateTime earlierDate = (DateTime)value;
 
-            DateTime laterDate = (DateTime)validationContext.ObjectType.GetProperty(DateToCompareToFieldName).GetValue(validationContext.ObjectInstance, null);
+            var lDate = validationContext?.ObjectType.GetProperty(DateToCompareToFieldName)?.GetValue(validationContext.ObjectInstance, null);
+            if (lDate == null)
+            {
+                return new ValidationResult($"Date {DateToCompareToFieldName} cann't be null");
+            }
+            DateTime laterDate = (DateTime)lDate;
+
 
             if (laterDate.IsStrictlyGreaterThan(earlierDate))
             {

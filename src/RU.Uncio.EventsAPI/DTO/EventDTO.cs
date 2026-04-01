@@ -16,7 +16,7 @@ namespace RU.Uncio.EventsAPI.DTO
         /// Event title
         /// </summary>
         [Required]
-        public string Title { get; set; }
+        public string? Title { get; set; }
         /// <summary>
         /// Event description (optional)
         /// </summary>

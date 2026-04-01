@@ -30,7 +30,7 @@ The REST API to the app is described below.
 `GET /events/`
 
     curl -X 'GET' \ 
-		'https://localhost:7134/api/Events' \ 
+		'https://localhost:7134/Events' \ 
 		-H 'accept: application/json'
 
 ### Response
@@ -49,7 +49,7 @@ The REST API to the app is described below.
 `GET /events/id`
 
     curl -X 'GET' \
-		'https://localhost:7134/api/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
+		'https://localhost:7134/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
 		-H 'accept: application/json'
 
 ### Response
@@ -68,7 +68,7 @@ The REST API to the app is described below.
 `POST /events/`
 
     curl -X 'POST' \
-		  'https://localhost:7134/api/Events' \
+		  'https://localhost:7134/Events' \
 		  -H 'accept: text/plain' \
 		  -H 'Content-Type: application/json' \
 		  -d '{
@@ -96,7 +96,7 @@ The REST API to the app is described below.
 `PUT /events/id`
 
     curl -X 'PUT' \
-	  'https://localhost:7134/api/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
+	  'https://localhost:7134/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
 	  -H 'accept: text/plain' \
 	  -H 'Content-Type: application/json' \
 	  -d '{
@@ -124,7 +124,7 @@ The REST API to the app is described below.
 `DELETE /events/id`
 
     curl -X 'DELETE' \
-	  'https://localhost:7134/api/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
+	  'https://localhost:7134/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
 	  -H 'accept: text/plain'
 
 ### Response

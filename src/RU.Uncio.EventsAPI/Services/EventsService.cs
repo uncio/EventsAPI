@@ -27,7 +27,7 @@ namespace RU.Uncio.EventsAPI.Services
         /// </summary>
         /// <param name="id">ID parameter of event</param>
         /// <returns></returns>
-        public Event GetEvent(Guid id)
+        public Event? GetEvent(Guid id)
         {
             if(Events.TryGetValue(id, out var ev))
                 return ev;

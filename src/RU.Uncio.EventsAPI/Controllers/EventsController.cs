@@ -11,7 +11,7 @@ namespace RU.Uncio.EventsAPI.Controllers
     /// </summary>
     /// <param name="eventsService">Constructor with service</param>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class EventsController(IEventsService eventsService) : ControllerBase
     {
         /// <summary>
@@ -22,15 +22,15 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet]
-        public ApiResult<List<Event>> GetAllEvents()
+        public ActionResult<ApiResult<List<Event>>> GetAllEvents()
         {
-            return new ApiResult<List<Event>>
+            return Ok(new ApiResult<List<Event>>
             {
                 Data = eventsService.GetEvents(),
                 Success = true,
                 StatusCode = HttpStatusCode.OK,
                 Message = "Gettin all events from collection"
-            };
+            });
         }
 
         /// <summary>
@@ -42,28 +42,28 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiBaseResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet("{id:Guid}")]
-        public ApiBaseResult GetBuildingByIndex(Guid id)
+        public ActionResult<ApiBaseResult> GetEventById(Guid id)
         {
             var result = eventsService.GetEvent(id);
 
-            if(result != null)
+            if (result != null)
             {
-                return new ApiResult<Event>
+                return Ok(new ApiResult<Event>
                 {
-                    Data = eventsService.GetEvent(id),
+                    Data = result,
                     Success = true,
                     StatusCode = HttpStatusCode.OK,
                     Message = $"Getting event with ID {id} from collection"
-                };
+                });
             }
             else
             {
-                return new ApiResult
+                return NotFound(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.NotFound,
                     Message = $"Event with ID {id} is not found in the collection"
-                };
+                });
             }
         }
 
@@ -76,40 +76,40 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status201Created)]
         [Consumes("application/json")]
         [HttpPost]
-        public ApiResult CreateEvent([FromBody] EventDTO ev)
+        public ActionResult<ApiResult> CreateEvent([FromBody] EventDTO ev)
         {
             if (!ModelState.IsValid)
             {
-                return new ApiResult
+                return BadRequest(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     Message = "Model validation error"
                     //how to send ModelState here?
-                };
+                });
             }
 
             try
             {
-                var newEvent = new Event(ev.Id, ev.Title, ev.StartAt, ev.EndAt) { Description = ev.Description };
+                var newEvent = new Event(ev.Id, ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
                 eventsService.AddEvent(newEvent);
 
-                return new ApiResult
+                return CreatedAtAction(nameof(CreateEvent), new ApiResult
                 {
                     Success = true,
                     StatusCode = HttpStatusCode.Created,
                     Message = "Adding the event to the collection"
-                };
+                });
             }
-            catch(ArgumentException ex)
+            catch (ArgumentException ex)
             {
-                return new ApiResult
+                return BadRequest(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     Message = ex.Message
-                };
-            }            
+                });
+            }
         }
 
         /// <summary>
@@ -122,47 +122,42 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
         [Consumes("application/json")]
         [HttpPut("{id:Guid}")]
-        public ApiResult ReplaceEvent(Guid id, [FromBody] EventDTO ev)
+        public ActionResult<ApiResult> ReplaceEvent(Guid id, [FromBody] EventDTO ev)
         {
             if (!ModelState.IsValid)
             {
-                return new ApiResult
+                return BadRequest(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     Message = "Model validation error"
                     //how to send ModelState here?
-                };
+                });
             }
 
             try
             {
-                var newEvent = new Event(ev.Id, ev.Title, ev.StartAt, ev.EndAt) { Description = ev.Description };
+                var newEvent = new Event(ev.Id, ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
                 eventsService.ReplaceEvent(id, newEvent);
-                return new ApiResult
-                {
-                    Success = true,
-                    StatusCode = HttpStatusCode.NoContent,
-                    Message = $"Replacing the event by ID {ev.Id}"
-                };
-            }            
+                return NoContent();
+            }
             catch (ArgumentException ex)
             {
-                return new ApiResult
+                return BadRequest(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.BadRequest,
                     Message = ex.Message
-                };
+                });
             }
             catch (IndexOutOfRangeException)
             {
-                return new ApiResult
+                return NotFound(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.NotFound,
                     Message = $"Event with ID {id} is not found in the collection"
-                };
+                });
             }
         }
 
@@ -174,28 +169,23 @@ namespace RU.Uncio.EventsAPI.Controllers
         /// and HTTP status-code 204 NoContent in case of success</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
         [HttpDelete("{id:Guid}")]
-        public ApiResult DeleteEvent(Guid id)
+        public ActionResult<ApiResult> DeleteEvent(Guid id)
         {
             try
             {
                 eventsService.RemoveEvent(id);
-                return new ApiResult
-                {
-                    Success = true,
-                    StatusCode = HttpStatusCode.NoContent,
-                    Message = $"Deleting event with ID {id}"
-                };
+                return NoContent();
             }
             catch (IndexOutOfRangeException)
             {
-                return new ApiResult
+                return NotFound(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.NotFound,
                     Message = $"Event with ID {id} is not found in the collection"
-                };
+                });
             }
-            
+
         }
     }
 }
