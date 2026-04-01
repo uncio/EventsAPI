@@ -1,0 +1,6 @@
+@RU.Uncio.EventsAPI_HostAddress = http://localhost:5289
+
+GET {{RU.Uncio.EventsAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
