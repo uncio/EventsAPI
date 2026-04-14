@@ -1,4 +1,5 @@
-﻿using RU.Uncio.EventsAPI.Exceptions;
+﻿using RU.Uncio.EventsAPI.DTO;
+using RU.Uncio.EventsAPI.Exceptions;
 using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Models;
 
@@ -24,10 +25,52 @@ namespace RU.Uncio.EventsAPI.Services
         /// <summary>
         /// Gets all events from collection
         /// </summary>
-        /// <returns></returns>
-        public List<Event> GetEvents()
+        /// <param name="title">Title filter</param>
+        /// <param name="from">Event starts from filter</param>
+        /// <param name="to">Event ends up to filter</param>
+        /// <returns>Collection of filtered events</returns>
+        public List<Event> GetEvents(string? title, DateTime? from, DateTime? to)
         {
-            return Events.Values.ToList();
+            IEnumerable<Event> result = Events.Values.ToList();
+
+            if (!String.IsNullOrEmpty(title))
+            {
+                var lowerTitleFilter = title.ToLower();
+                result = result
+                    .Where(ev => ev.Title.ToLower().Contains(lowerTitleFilter));
+            }
+
+            if(from != null)
+            {
+                result = result
+                    .Where(ev => ev.StartAt.Date >= from.Value.Date);
+            }
+
+            if(to != null)
+            {
+                result = result
+                    .Where(ev => to.Value.Date >= ev.EndAt.Date);
+            }
+
+            return result.ToList();
+        }
+
+        public PaginatedResultDTO<EventDTO> GetPaginatedEvents(IEnumerable<EventDTO> filtered, int page, int pageSize)
+        {
+            var items = filtered
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize);
+
+            int totalPages = (int)Math.Ceiling((double)filtered.Count() / pageSize);
+
+            return new PaginatedResultDTO<EventDTO>
+                (
+                    items.ToList(),
+                    items.Count(),
+                    page,
+                    totalPages,
+                    Events.Count()
+                );
         }
 
         /// <summary>

@@ -10,7 +10,7 @@ namespace RU.Uncio.EventsAPI.DTO
         /// <summary>
         /// Event ID
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid Id { get; internal set; }
         /// <summary>
         /// Event title
         /// </summary>
@@ -30,14 +30,6 @@ namespace RU.Uncio.EventsAPI.DTO
         /// Event ends at
         /// </summary>
         [Required]
-        public DateTime EndAt { get; set; }
-        
-        /// <summary>
-        /// Default constructor
-        /// </summary>
-        public EventDTO()
-        {
-            Id = Guid.NewGuid();
-        }
+        public DateTime EndAt { get; set; }        
     }
 }

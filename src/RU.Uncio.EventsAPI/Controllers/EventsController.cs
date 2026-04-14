@@ -18,16 +18,20 @@ namespace RU.Uncio.EventsAPI.Controllers
     public class EventsController(IEventsService eventsService, ILogger<EventsController> logger) : ControllerBase
     {
         /// <summary>
-        /// Returns all events from collection
+        /// Returns paginated events from collection
         /// </summary>
         /// <response code="200">JSON-schema of ApiResult is returned with events and detailed responce
         /// and HTTP status-code 200 Ok in case of success</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet]
-        public ActionResult<ApiResult<List<EventDTO>>> GetAllEvents()
+        public ActionResult<ApiResult<PaginatedResultDTO<EventDTO>>> GetEvents([FromQuery] string? title = null,
+                                                                    [FromQuery] DateTime? from = null,
+                                                                    [FromQuery] DateTime? to = null,
+                                                                    [FromQuery] int page = 1,
+                                                                    [FromQuery] int pageSize = 10)
         {
-            var result = eventsService.GetEvents()
+            var events = eventsService.GetEvents(title, from, to)
                 .Select(ev => new EventDTO
                 {
                     Id = ev.Id,
@@ -35,14 +39,15 @@ namespace RU.Uncio.EventsAPI.Controllers
                     Description = ev.Description,
                     StartAt = ev.StartAt,
                     EndAt = ev.EndAt
-                }).ToList();
+                });
+            var result = eventsService.GetPaginatedEvents(events, page, pageSize);             
 
-            return Ok(new ApiResult<List<EventDTO>>
+            return Ok(new ApiResult<PaginatedResultDTO<EventDTO>>
             {
                 Data = result,
                 Success = true,
                 StatusCode = HttpStatusCode.OK,
-                Message = "Gettin all events from collection"
+                Message = "Gettin paginated events from collection"
             });
         }
 
@@ -55,20 +60,21 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiBaseResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet("{id:Guid}")]
-        public ActionResult<ApiBaseResult> GetEventById(Guid id)
+        public ActionResult<ApiBaseResult> GetEventById([FromRoute] Guid id)
         {
             var eventById = eventsService.GetEvent(id);
-            var result = new EventDTO
-            {
-                Id = eventById.Id,
-                Title = eventById.Title,
-                Description = eventById.Description,
-                StartAt = eventById.StartAt,
-                EndAt = eventById.EndAt
-            };
 
-            if (result != null)
+            if (eventById != null)
             {
+                var result = new EventDTO
+                {
+                    Id = eventById.Id,
+                    Title = eventById.Title,
+                    Description = eventById.Description,
+                    StartAt = eventById.StartAt,
+                    EndAt = eventById.EndAt
+                };
+
                 return Ok(new ApiResult<EventDTO>
                 {
                     Data = result,
@@ -104,7 +110,7 @@ namespace RU.Uncio.EventsAPI.Controllers
                 throw new ValidationException();
             }
 
-            var newEvent = new Event(ev.Id, ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
+            var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
             eventsService.AddEvent(newEvent);
 
             return CreatedAtAction(nameof(CreateEvent), new ApiResult
@@ -125,14 +131,14 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
         [Consumes("application/json")]
         [HttpPut("{id:Guid}")]
-        public ActionResult<ApiResult> UpdateEvent(Guid id, [FromBody] EventDTO ev)
+        public ActionResult UpdateEvent([FromRoute] Guid id, [FromBody] EventDTO ev)
         {
             if (!ModelState.IsValid)
             {
                 throw new ValidationException();
             }
 
-            var newEvent = new Event(ev.Id, ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
+            var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
             eventsService.UpdateEvent(id, newEvent);
             return NoContent();
         }
@@ -145,7 +151,7 @@ namespace RU.Uncio.EventsAPI.Controllers
         /// and HTTP status-code 204 NoContent in case of success</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
         [HttpDelete("{id:Guid}")]
-        public ActionResult<ApiResult> DeleteEvent(Guid id)
+        public ActionResult DeleteEvent([FromRoute] Guid id)
         {
             eventsService.RemoveEvent(id);
             return NoContent();

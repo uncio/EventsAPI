@@ -8,7 +8,7 @@
         /// <summary>
         /// Event ID
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid Id { get; private set; }
         /// <summary>
         /// Event title
         /// </summary>
@@ -33,9 +33,9 @@
         /// <param name="title"></param>
         /// <param name="starts"></param>
         /// <param name="ends"></param>
-        public Event(Guid id, string title, DateTime starts, DateTime ends)
+        public Event(string title, DateTime starts, DateTime ends)
         {
-            Id = id;
+            Id = Guid.NewGuid();
             Title = title;
             StartAt = starts;
             EndAt = ends;

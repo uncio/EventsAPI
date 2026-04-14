@@ -1,4 +1,6 @@
-﻿using RU.Uncio.EventsAPI.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using RU.Uncio.EventsAPI.DTO;
+using RU.Uncio.EventsAPI.Models;
 
 namespace RU.Uncio.EventsAPI.Interfaces
 {
@@ -11,7 +13,7 @@ namespace RU.Uncio.EventsAPI.Interfaces
         /// Gets all events from collection
         /// </summary>
         /// <returns>Collection of events</returns>
-        List<Event> GetEvents();
+        List<Event> GetEvents(string? title, DateTime? from, DateTime? to);
         /// <summary>
         /// Gets an event from collection by ID
         /// </summary>
@@ -34,5 +36,7 @@ namespace RU.Uncio.EventsAPI.Interfaces
         /// </summary>
         /// <param name="id"></param>
         void RemoveEvent(Guid id);
+
+        PaginatedResultDTO<EventDTO> GetPaginatedEvents(IEnumerable<EventDTO> filtered, int page, int pageSize);
     }
 }
