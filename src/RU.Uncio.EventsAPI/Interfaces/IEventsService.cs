@@ -17,7 +17,7 @@ namespace RU.Uncio.EventsAPI.Interfaces
         /// </summary>
         /// <param name="id">ID parameter of event</param>
         /// <returns>Event instance</returns>
-        Event? GetEvent(Guid id);
+        Event GetEvent(Guid id);
         /// <summary>
         /// Adds an event to collection
         /// </summary>

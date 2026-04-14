@@ -5,22 +5,21 @@ namespace RU.Uncio.EventsAPI.DTO
     /// <summary>
     /// Data Transfer Object of Event class
     /// </summary>
-    public class EventDTO
+    public record EventDTO
     {
         /// <summary>
         /// Event ID
         /// </summary>
-        [Required]
         public Guid Id { get; set; }
         /// <summary>
         /// Event title
         /// </summary>
         [Required]
-        public string? Title { get; set; }
+        public required string Title { get; set; }
         /// <summary>
         /// Event description (optional)
         /// </summary>
-        public string Description { get; set; } = "";
+        public string? Description { get; set; } = "";
         /// <summary>
         /// Event starts at
         /// </summary>
@@ -32,5 +31,13 @@ namespace RU.Uncio.EventsAPI.DTO
         /// </summary>
         [Required]
         public DateTime EndAt { get; set; }
+        
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        public EventDTO()
+        {
+            Id = Guid.NewGuid();
+        }
     }
 }

@@ -22,11 +22,21 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet]
-        public ActionResult<ApiResult<List<Event>>> GetAllEvents()
+        public ActionResult<ApiResult<List<EventDTO>>> GetAllEvents()
         {
-            return Ok(new ApiResult<List<Event>>
+            var result = eventsService.GetEvents()
+                .Select(ev => new EventDTO
+                {
+                    Id = ev.Id,
+                    Title = ev.Title,
+                    Description = ev.Description,
+                    StartAt = ev.StartAt,
+                    EndAt = ev.EndAt
+                }).ToList();
+
+            return Ok(new ApiResult<List<EventDTO>>
             {
-                Data = eventsService.GetEvents(),
+                Data = result,
                 Success = true,
                 StatusCode = HttpStatusCode.OK,
                 Message = "Gettin all events from collection"
@@ -44,11 +54,19 @@ namespace RU.Uncio.EventsAPI.Controllers
         [HttpGet("{id:Guid}")]
         public ActionResult<ApiBaseResult> GetEventById(Guid id)
         {
-            var result = eventsService.GetEvent(id);
+            var eventById = eventsService.GetEvent(id);
+            var result = new EventDTO
+            {
+                Id = eventById.Id,
+                Title = eventById.Title,
+                Description = eventById.Description,
+                StartAt = eventById.StartAt,
+                EndAt = eventById.EndAt
+            };
 
             if (result != null)
             {
-                return Ok(new ApiResult<Event>
+                return Ok(new ApiResult<EventDTO>
                 {
                     Data = result,
                     Success = true,
