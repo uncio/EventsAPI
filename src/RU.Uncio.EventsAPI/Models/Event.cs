@@ -47,5 +47,13 @@
             //}
             #endregion
         }
+
+        internal void UpdateWith(Event ev)
+        {
+            Title = ev.Title;
+            Description = ev.Description;
+            StartAt = ev.StartAt;
+            EndAt = ev.EndAt;
+        }
     }
 }

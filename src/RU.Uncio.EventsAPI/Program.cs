@@ -1,5 +1,6 @@
 using Microsoft.OpenApi;
 using RU.Uncio.EventsAPI.Interfaces;
+using RU.Uncio.EventsAPI.Middlewares;
 using RU.Uncio.EventsAPI.Services;
 using System.Reflection;
 
@@ -24,6 +25,8 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

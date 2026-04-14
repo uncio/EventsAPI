@@ -1,4 +1,5 @@
-﻿using RU.Uncio.EventsAPI.Interfaces;
+﻿using RU.Uncio.EventsAPI.Exceptions;
+using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Models;
 
 namespace RU.Uncio.EventsAPI.Services
@@ -8,6 +9,13 @@ namespace RU.Uncio.EventsAPI.Services
     /// </summary>
     public class EventsService : IEventsService
     {
+        private readonly ILogger<EventsService> logger;
+
+        public EventsService(ILogger<EventsService> log)
+        {
+            logger = log;
+        }
+
         /// <summary>
         /// Collection of events
         /// </summary>
@@ -32,6 +40,7 @@ namespace RU.Uncio.EventsAPI.Services
             if(Events.TryGetValue(id, out var ev))
                 return ev;
 
+            logger.LogError($"Events collections doesn't contain an event with id {id}");
             return null;
         }
         /// <summary>
@@ -45,27 +54,25 @@ namespace RU.Uncio.EventsAPI.Services
                 Events[ev.Id] = ev;
             else
             {
-                throw new ArgumentException($"Event with ID {ev.Id} already exists in the collection");
+                throw new EventExistsException($"Event with ID {ev.Id} already exists in the collection");
             }
         }
 
         /// <summary>
-        /// Replaces an event i collection by ID
+        /// Updates an event i collection by ID
         /// </summary>
         /// <param name="id">ID parameter of event</param>
-        /// <param name="ev">Event to replace</param>
+        /// <param name="ev">Event to update</param>
         /// <exception cref="IndexOutOfRangeException"></exception>
-        public void ReplaceEvent(Guid id, Event ev)
+        public void UpdateEvent(Guid id, Event ev)
         {
             if (Events.TryGetValue(id, out _))
-            {
-                if (ev.Id != id)
-                    throw new ArgumentException("Input id doesn't correspond event id");
-                Events[id] = ev;
+            {                
+                Events[id].UpdateWith(ev);
             }
             else
             {
-                throw new IndexOutOfRangeException();
+                throw new MissingEventException($"Events collections doesn't contain an event with id {id}");
             }
         }
 
@@ -82,7 +89,7 @@ namespace RU.Uncio.EventsAPI.Services
             }
             else
             {
-                throw new IndexOutOfRangeException();
+                throw new MissingEventException($"Events collections doesn't contain an event with id {id}");
             }
         }
     }
