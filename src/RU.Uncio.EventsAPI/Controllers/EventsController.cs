@@ -12,7 +12,8 @@ namespace RU.Uncio.EventsAPI.Controllers
     /// <summary>
     /// Events controller
     /// </summary>
-    /// <param name="eventsService">Constructor with service</param>
+    /// <param name="eventsService"></param>
+    /// <param name="logger"></param>
     [ApiController]
     [Route("[controller]")]
     public class EventsController(IEventsService eventsService, ILogger<EventsController> logger) : ControllerBase
@@ -85,6 +86,7 @@ namespace RU.Uncio.EventsAPI.Controllers
             }
             else
             {
+                logger.LogError($"Event with ID {id} is not found in the collection");
                 return NotFound(new ApiResult
                 {
                     Success = false,
@@ -135,6 +137,7 @@ namespace RU.Uncio.EventsAPI.Controllers
         {
             if (!ModelState.IsValid)
             {
+                logger.LogError($"{String.Join(";", ModelState)}");
                 throw new ValidationException();
             }
 

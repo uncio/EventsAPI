@@ -2,6 +2,9 @@
 
 namespace RU.Uncio.EventsAPI.Interfaces
 {
+    /// <summary>
+    /// Repository wrapper
+    /// </summary>
     public interface IEventRepository
     {
         /// <summary>

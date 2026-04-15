@@ -29,7 +29,6 @@
         /// <summary>
         /// Event base constructor
         /// </summary>
-        /// <param name="id"></param>
         /// <param name="title"></param>
         /// <param name="starts"></param>
         /// <param name="ends"></param>

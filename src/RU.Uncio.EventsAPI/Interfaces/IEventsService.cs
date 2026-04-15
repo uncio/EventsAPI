@@ -37,6 +37,13 @@ namespace RU.Uncio.EventsAPI.Interfaces
         /// <param name="id"></param>
         void RemoveEvent(Guid id);
 
+        /// <summary>
+        /// Returns paginated events
+        /// </summary>
+        /// <param name="filtered">events after filtering</param>
+        /// <param name="page">page number</param>
+        /// <param name="pageSize">items number per page</param>
+        /// <returns></returns>
         PaginatedResultDTO<EventDTO> GetPaginatedEvents(IEnumerable<EventDTO> filtered, int page, int pageSize);
     }
 }

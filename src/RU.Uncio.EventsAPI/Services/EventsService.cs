@@ -13,6 +13,11 @@ namespace RU.Uncio.EventsAPI.Services
         private readonly ILogger<EventsService> logger;
         private readonly IEventRepository repository;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="log"></param>
+        /// <param name="repo"></param>
         public EventsService(ILogger<EventsService> log, IEventRepository repo)
         {
             logger = log;
@@ -52,6 +57,13 @@ namespace RU.Uncio.EventsAPI.Services
             return result.ToList();
         }
 
+        /// <summary>
+        /// Returns paginated events
+        /// </summary>
+        /// <param name="filtered">events after filtering</param>
+        /// <param name="page">page number</param>
+        /// <param name="pageSize">items number per page</param>
+        /// <returns></returns>
         public PaginatedResultDTO<EventDTO> GetPaginatedEvents(IEnumerable<EventDTO> filtered, int page, int pageSize)
         {
             var items = filtered

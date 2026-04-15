@@ -5,11 +5,19 @@ using System.Net;
 
 namespace RU.Uncio.EventsAPI.Middlewares
 {
+    /// <summary>
+    /// Final exception handler
+    /// </summary>
     public class GlobalExceptionHandlingMiddleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<GlobalExceptionHandlingMiddleware> _logger;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="next"></param>
+        /// <param name="logger"></param>
         public GlobalExceptionHandlingMiddleware(
             RequestDelegate next,
             ILogger<GlobalExceptionHandlingMiddleware> logger)
@@ -18,6 +26,11 @@ namespace RU.Uncio.EventsAPI.Middlewares
             _logger = logger;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="httpContext"></param>
+        /// <returns></returns>
         public async Task InvokeAsync(HttpContext httpContext)
         {
             try
