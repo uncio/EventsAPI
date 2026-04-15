@@ -2,5 +2,6 @@
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
+  <Project Path="EventsAPI.Tests/EventsAPI.Tests.csproj" Id="c4accd7f-9b8e-4281-8920-ab828cd802fd" />
   <Project Path="RU.Uncio.EventsAPI/RU.Uncio.EventsAPI.csproj" />
 </Solution>

@@ -11,16 +11,13 @@ namespace RU.Uncio.EventsAPI.Services
     public class EventsService : IEventsService
     {
         private readonly ILogger<EventsService> logger;
+        private readonly IEventRepository repository;
 
-        public EventsService(ILogger<EventsService> log)
+        public EventsService(ILogger<EventsService> log, IEventRepository repo)
         {
             logger = log;
+            repository = repo;
         }
-
-        /// <summary>
-        /// Collection of events
-        /// </summary>
-        public static Dictionary<Guid, Event> Events { get; private set; } = [];
 
         /// <summary>
         /// Gets all events from collection
@@ -29,9 +26,9 @@ namespace RU.Uncio.EventsAPI.Services
         /// <param name="from">Event starts from filter</param>
         /// <param name="to">Event ends up to filter</param>
         /// <returns>Collection of filtered events</returns>
-        public List<Event> GetEvents(string? title, DateTime? from, DateTime? to)
+        public List<Event> GetEvents(string? title = null, DateTime? from = null, DateTime? to = null)
         {
-            IEnumerable<Event> result = Events.Values.ToList();
+            IEnumerable<Event> result = repository.GetEvents().Values.ToList();
 
             if (!String.IsNullOrEmpty(title))
             {
@@ -69,7 +66,7 @@ namespace RU.Uncio.EventsAPI.Services
                     items.Count(),
                     page,
                     totalPages,
-                    Events.Count()
+                    repository.GetEvents().Count()
                 );
         }
 
@@ -80,7 +77,7 @@ namespace RU.Uncio.EventsAPI.Services
         /// <returns></returns>
         public Event GetEvent(Guid id)
         {
-            if(Events.TryGetValue(id, out var ev))
+            if(repository.GetEvents().TryGetValue(id, out var ev))
                 return ev;
 
             logger.LogError($"Events collections doesn't contain an event with id {id}");
@@ -93,8 +90,8 @@ namespace RU.Uncio.EventsAPI.Services
         /// <exception cref="ArgumentException"></exception>
         public void AddEvent(Event ev)
         {
-            if(!Events.ContainsKey(ev.Id))
-                Events[ev.Id] = ev;
+            if(!repository.GetEvents().ContainsKey(ev.Id))
+                repository.AddEvent(ev);
             else
             {
                 throw new EventExistsException($"Event with ID {ev.Id} already exists in the collection");
@@ -109,9 +106,9 @@ namespace RU.Uncio.EventsAPI.Services
         /// <exception cref="IndexOutOfRangeException"></exception>
         public void UpdateEvent(Guid id, Event ev)
         {
-            if (Events.TryGetValue(id, out _))
+            if (repository.GetEvents().TryGetValue(id, out _))
             {                
-                Events[id].UpdateWith(ev);
+                repository.UpdateEvent(id, ev);
             }
             else
             {
@@ -126,9 +123,9 @@ namespace RU.Uncio.EventsAPI.Services
         /// <exception cref="IndexOutOfRangeException"></exception>
         public void RemoveEvent(Guid id)
         {
-            if (Events.TryGetValue(id, out _))
+            if (repository.GetEvents().TryGetValue(id, out _))
             {
-                Events.Remove(id);
+                repository.RemoveEvent(id);
             }
             else
             {
