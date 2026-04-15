@@ -109,7 +109,8 @@ namespace RU.Uncio.EventsAPI.Controllers
         {
             if (!ModelState.IsValid)
             {
-                throw new ValidationException();
+                logger.LogError($"Validation failed: {String.Join(";", ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
+                throw new ValidationException($"Validation failed: {String.Join(";", ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
             }
 
             var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
@@ -137,8 +138,8 @@ namespace RU.Uncio.EventsAPI.Controllers
         {
             if (!ModelState.IsValid)
             {
-                logger.LogError($"{String.Join(";", ModelState)}");
-                throw new ValidationException();
+                logger.LogError($"Validation failed: {String.Join(";", ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
+                throw new ValidationException($"Validation failed: {String.Join(";", ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
             }
 
             var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
