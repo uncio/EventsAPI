@@ -18,29 +18,64 @@ API to a DataMapper-backed model.
 ## Run the app within Swagger (https://localhost:7134/swagger/index.html)
 
     dotnet run --launch-profile sw_https
+	
+## Run unit tests
+	cd ..	
+    dotnet test
 
 # REST API
 
 The REST API to the app is described below.
 
-## Get list of Events
+## Get list of Events (paginated by default: Page number = 1, PageSize = 10)
 
 ### Request
 
 `GET /events/`
 
-    curl -X 'GET' \ 
-		'https://localhost:7134/Events' \ 
-		-H 'accept: application/json'
+curl -X 'GET' \
+  'https://localhost:7134/Events?page=1&pageSize=10' \
+  -H 'accept: application/json'
 
 ### Response
-	Result JSON-schema
-	{
-	  "success": true,
-	  "statusCode": 200,
-	  "dateTime": "2026-03-31T11:54:40.113Z",
-	  "message": "string"
-	}
+{
+  "data": {
+    "items": [],
+    "currentItems": 0,
+    "currentPage": 1,
+    "totalPages": 0,
+    "totalItems": 0
+  },
+  "success": true,
+  "statusCode": 200,
+  "dateTime": "2026-04-15T13:58:48.935942Z",
+  "message": "Gettin paginated events from collection"
+}
+
+## Get filtered list of Events (custom paginated: Page number = 2, PageSize = 5)
+
+### Request
+
+`GET /events/`
+
+curl -X 'GET' \
+  'https://localhost:7134/Events?title=Test&from=2026.01.12&to=2026.01.24&page=2&pageSize=5' \
+  -H 'accept: application/json'
+
+### Response
+{
+  "data": {
+    "items": [],
+    "currentItems": 0,
+    "currentPage": 2,
+    "totalPages": 0,
+    "totalItems": 0
+  },
+  "success": true,
+  "statusCode": 200,
+  "dateTime": "2026-04-15T14:01:04.273336Z",
+  "message": "Gettin paginated events from collection"
+}
 
 ## Get a specific Event
 
