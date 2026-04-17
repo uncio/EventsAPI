@@ -32,7 +32,8 @@ namespace RU.Uncio.EventsAPI.Controllers
                                                                     [FromQuery] int page = 1,
                                                                     [FromQuery] int pageSize = 10)
         {
-            var events = eventsService.GetEvents(title, from, to)
+            var events = eventsService.GetEvents(title, from, to);                
+            var paginatedEvents = eventsService.GetPaginatedEvents(events, page, pageSize, out int totalPages)
                 .Select(ev => new EventDTO
                 {
                     Id = ev.Id,
@@ -41,7 +42,15 @@ namespace RU.Uncio.EventsAPI.Controllers
                     StartAt = ev.StartAt,
                     EndAt = ev.EndAt
                 });
-            var result = eventsService.GetPaginatedEvents(events, page, pageSize);             
+
+            var result = new PaginatedResultDTO<EventDTO>
+                (
+                    paginatedEvents.ToList(),
+                    paginatedEvents.Count(),
+                    page,
+                    totalPages,
+                    events.Count()
+                );
 
             return Ok(new ApiResult<PaginatedResultDTO<EventDTO>>
             {

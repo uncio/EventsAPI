@@ -373,20 +373,13 @@ namespace EventsAPI.Tests
             var expectedResult = "Event22";
 
             // Act
-            var currentEvents = eventsService.GetEvents()
-                .Select(ev => new EventDTO
-                {
-                    Title = ev.Title,
-                    Description = ev.Description,
-                    StartAt = ev.StartAt,
-                    EndAt = ev.EndAt
-                }); ;
-            var result = eventsService.GetPaginatedEvents(currentEvents, page: page, pageSize: pageSize);
+            var currentEvents = eventsService.GetEvents();
+            var result = eventsService.GetPaginatedEvents(currentEvents, page: page, pageSize: pageSize, out int totalPages);
 
             //Assert
-            Assert.Contains(expectedResult, result.Items.Select(ev => ev.Title));
-            Assert.DoesNotContain(result.Items, ev => notExpectedResult.Contains(ev.Title));
-            Assert.Equal(expectingItemsCount, result.CurrentItems);
+            Assert.Contains(expectedResult, result.Select(ev => ev.Title));
+            Assert.DoesNotContain(result, ev => notExpectedResult.Contains(ev.Title));
+            Assert.Equal(expectingItemsCount, result.Count());
         }
 
         [Fact]
@@ -401,19 +394,12 @@ namespace EventsAPI.Tests
             var expectingTotalPages = 1;
 
             // Act
-            var currentEvents = eventsService.GetEvents(title: searchSubstring)
-                .Select(ev => new EventDTO
-                {
-                    Title = ev.Title,
-                    Description = ev.Description,
-                    StartAt = ev.StartAt,
-                    EndAt = ev.EndAt
-                }); ;
-            var result = eventsService.GetPaginatedEvents(currentEvents, page: page, pageSize: pageSize);
+            var currentEvents = eventsService.GetEvents(title: searchSubstring);
+            var result = eventsService.GetPaginatedEvents(currentEvents, page: page, pageSize: pageSize, out int totalPages);
 
             //Assert
-            Assert.Equal(expectingItemsCount, result.CurrentItems);
-            Assert.Equal(expectingTotalPages, result.TotalPages);
+            Assert.Equal(expectingItemsCount, result.Count());
+            Assert.Equal(expectingTotalPages, totalPages);
         }
 
 

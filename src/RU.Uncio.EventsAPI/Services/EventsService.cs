@@ -63,23 +63,17 @@ namespace RU.Uncio.EventsAPI.Services
         /// <param name="filtered">events after filtering</param>
         /// <param name="page">page number</param>
         /// <param name="pageSize">items number per page</param>
+        /// <param name="totalPages">calculated amount of pages</param>
         /// <returns></returns>
-        public PaginatedResultDTO<EventDTO> GetPaginatedEvents(IEnumerable<EventDTO> filtered, int page, int pageSize)
+        public List<Event> GetPaginatedEvents(IEnumerable<Event> filtered, int page, int pageSize, out int totalPages)
         {
             var items = filtered
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize);
 
-            int totalPages = (int)Math.Ceiling((double)filtered.Count() / pageSize);
+            totalPages = (int)Math.Ceiling((double)filtered.Count() / pageSize);
 
-            return new PaginatedResultDTO<EventDTO>
-                (
-                    items.ToList(),
-                    items.Count(),
-                    page,
-                    totalPages,
-                    repository.GetEvents().Count()
-                );
+            return items.ToList();
         }
 
         /// <summary>
