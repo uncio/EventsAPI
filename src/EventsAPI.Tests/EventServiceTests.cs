@@ -444,5 +444,34 @@ namespace EventsAPI.Tests
             Assert.IsType<MissingEventException>(exception);
             Assert.StartsWith(expectedExceptionMessage, exception.Message);
         }
+
+        [Fact]
+        public void AddEvent_WhenIdAlreadyExists_ThrowsEventExistsException()
+        {
+            //Arrange            
+            var mockRepositoryToUpdate = new Mock<IEventRepository>();
+            var eventsServiceToUpdate = new EventsService(logger.Object, mockRepositoryToUpdate.Object);
+            var initialEvents = new List<Event>
+                {
+                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
+                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
+                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16)),
+                }
+                .ToDictionary(ev => ev.Id, events => events);
+            Event addingEvent = initialEvents.FirstOrDefault().Value;
+            var expectedExceptionMessage = $"Event with ID {addingEvent.Id} already exists in the collection";
+
+            mockRepositoryToUpdate.Setup(method => method.GetEvents()).Returns(initialEvents);
+            mockRepositoryToUpdate.Setup(method => method.AddEvent(It.IsAny<Event>()))
+                .Throws(new Exception(expectedExceptionMessage));
+
+            // Act
+            var exception = Assert
+                .Throws<EventExistsException>(() => eventsServiceToUpdate.AddEvent(addingEvent));
+
+            // Assert
+            Assert.IsType<EventExistsException>(exception);
+            Assert.StartsWith(expectedExceptionMessage, exception.Message);
+        }
     }
 }
