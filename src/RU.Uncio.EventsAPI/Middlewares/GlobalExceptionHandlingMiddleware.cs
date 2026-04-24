@@ -78,6 +78,7 @@ namespace RU.Uncio.EventsAPI.Middlewares
                 ValidationException ve => StatusCodes.Status400BadRequest,
                 EventExistsException eee => StatusCodes.Status400BadRequest,
                 MissingEventException mee => StatusCodes.Status404NotFound,
+                BookingNotFoundException mee => StatusCodes.Status404NotFound,
                 _ => StatusCodes.Status500InternalServerError
             };
 
@@ -87,6 +88,7 @@ namespace RU.Uncio.EventsAPI.Middlewares
                 ValidationException ve => HttpStatusCode.BadRequest,
                 EventExistsException eee => HttpStatusCode.BadRequest,
                 MissingEventException mee => HttpStatusCode.NotFound,
+                BookingNotFoundException mee => HttpStatusCode.NotFound,
                 _ => HttpStatusCode.InternalServerError
             };
     }

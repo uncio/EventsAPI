@@ -1,4 +1,6 @@
-﻿namespace RU.Uncio.EventsAPI.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace RU.Uncio.EventsAPI.Models
 {
     public enum BookingStatus
     {
@@ -15,6 +17,7 @@
         /// <summary>
         /// Event ID
         /// </summary>
+        [Required]
         public Guid EventId { get; private set; }
         /// <summary>
         /// Booking Status

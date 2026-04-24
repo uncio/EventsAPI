@@ -1,4 +1,5 @@
-﻿using RU.Uncio.EventsAPI.Interfaces;
+﻿using RU.Uncio.EventsAPI.Exceptions;
+using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Models;
 
 namespace RU.Uncio.EventsAPI.Services
@@ -14,7 +15,7 @@ namespace RU.Uncio.EventsAPI.Services
             scopeFactory = scope;
         }
 
-        public async Task<Guid> CreateBookingAsync(Guid eventId)
+        public async Task<Booking> CreateBookingAsync(Guid eventId)
         {
             using var scope = scopeFactory.CreateScope();
             var bookingService = scope.ServiceProvider
@@ -23,7 +24,7 @@ namespace RU.Uncio.EventsAPI.Services
 
             bookingService.AddBooking(newBooking);
 
-            return newBooking.Id;
+            return newBooking;
         }
 
         public async Task<Booking> GetBookingByIdAsync(Guid bookingId)
@@ -36,14 +37,40 @@ namespace RU.Uncio.EventsAPI.Services
 
             if (bookings.TryGetValue(bookingId, out var booking))
                 return booking;
-
-            logger.LogError($"Booking queue doesn't contain a booking with id {bookingId}");
             return null;
+            //throw new BookingNotFoundException($"Booking queue doesn't contain a booking with id {bookingId}");
         }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            throw new NotImplementedException();
+            //while (!stoppingToken.IsCancellationRequested)
+            //{
+            //    //try
+            //    //{
+            //    //    if (_taskQueue.TryDequeue(out var task))
+            //    //    {
+            //    //        _logger.LogInformation(
+            //    //            "Начата генерация отчёта {TaskId}, тип: {ReportType}",
+            //    //            task.Id, task.ReportType);
+
+            //    //        // Имитация долгой генерации отчёта
+            //    //        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+
+            //    //        _logger.LogInformation(
+            //    //            "Отчёт {TaskId} сгенерирован успешно", task.Id);
+            //    //    }
+            //    //}
+            //    //catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            //    //{
+            //    //    break;
+            //    //}
+            //    //catch (Exception ex)
+            //    //{
+            //    //    _logger.LogError(ex, "Ошибка при генерации отчёта");
+            //    //}
+
+            //    await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+            //}
         }
     }
 }
