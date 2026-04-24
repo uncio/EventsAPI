@@ -8,7 +8,7 @@
         /// <summary>
         /// Event ID
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid Id { get; private set; }
         /// <summary>
         /// Event title
         /// </summary>
@@ -29,13 +29,12 @@
         /// <summary>
         /// Event base constructor
         /// </summary>
-        /// <param name="id"></param>
         /// <param name="title"></param>
         /// <param name="starts"></param>
         /// <param name="ends"></param>
-        public Event(Guid id, string title, DateTime starts, DateTime ends)
+        public Event(string title, DateTime starts, DateTime ends)
         {
-            Id = id;
+            Id = Guid.NewGuid();
             Title = title;
             StartAt = starts;
             EndAt = ends;
@@ -46,6 +45,14 @@
             //    throw new ArgumentException("Event end time is to be later than start time");
             //}
             #endregion
+        }
+
+        internal void UpdateWith(Event ev)
+        {
+            Title = ev.Title;
+            Description = ev.Description;
+            StartAt = ev.StartAt;
+            EndAt = ev.EndAt;
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using RU.Uncio.EventsAPI.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using RU.Uncio.EventsAPI.DTO;
+using RU.Uncio.EventsAPI.Models;
 
 namespace RU.Uncio.EventsAPI.Interfaces
 {
@@ -11,28 +13,37 @@ namespace RU.Uncio.EventsAPI.Interfaces
         /// Gets all events from collection
         /// </summary>
         /// <returns>Collection of events</returns>
-        List<Event> GetEvents();
+        List<Event> GetEvents(string? title, DateTime? from, DateTime? to);
         /// <summary>
         /// Gets an event from collection by ID
         /// </summary>
         /// <param name="id">ID parameter of event</param>
         /// <returns>Event instance</returns>
-        Event? GetEvent(Guid id);
+        Event GetEvent(Guid id);
         /// <summary>
         /// Adds an event to collection
         /// </summary>
         /// <param name="ev">Event to add</param>
         void AddEvent(Event ev);
         /// <summary>
-        /// Replaces an event in collection by event ID
+        /// Updates an event in collection by event ID
         /// </summary>
         /// <param name="id">ID parameter of event</param>
-        /// <param name="ev">Event to replace</param>
-        void ReplaceEvent(Guid id, Event ev);
+        /// <param name="ev">Event to update</param>
+        void UpdateEvent(Guid id, Event ev);
         /// <summary>
         /// Deletes an event from collection by event ID
         /// </summary>
         /// <param name="id"></param>
         void RemoveEvent(Guid id);
+        /// <summary>
+        /// Returns paginated events
+        /// </summary>
+        /// <param name="filtered">events after filtering</param>
+        /// <param name="page">page number</param>
+        /// <param name="pageSize">items number per page</param>
+        /// <param name="totalPages"></param>
+        /// <returns>calculated amount of pages</returns>
+        List<Event> GetPaginatedEvents(IEnumerable<Event> filtered, int page, int pageSize, out int totalPages);
     }
 }

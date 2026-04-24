@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RU.Uncio.EventsAPI.DTO;
+using RU.Uncio.EventsAPI.Exceptions;
 using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Models;
+using RU.Uncio.EventsAPI.Services;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 
 namespace RU.Uncio.EventsAPI.Controllers
@@ -9,27 +12,52 @@ namespace RU.Uncio.EventsAPI.Controllers
     /// <summary>
     /// Events controller
     /// </summary>
-    /// <param name="eventsService">Constructor with service</param>
+    /// <param name="eventsService"></param>
+    /// <param name="logger"></param>
     [ApiController]
     [Route("[controller]")]
-    public class EventsController(IEventsService eventsService) : ControllerBase
+    public class EventsController(IEventsService eventsService, ILogger<EventsController> logger) : ControllerBase
     {
         /// <summary>
-        /// Returns all events from collection
+        /// Returns paginated events from collection
         /// </summary>
         /// <response code="200">JSON-schema of ApiResult is returned with events and detailed responce
         /// and HTTP status-code 200 Ok in case of success</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet]
-        public ActionResult<ApiResult<List<Event>>> GetAllEvents()
+        public ActionResult<ApiResult<PaginatedResultDTO<EventDTO>>> GetEvents([FromQuery] string? title = null,
+                                                                    [FromQuery] DateTime? from = null,
+                                                                    [FromQuery] DateTime? to = null,
+                                                                    [FromQuery] int page = 1,
+                                                                    [FromQuery] int pageSize = 10)
         {
-            return Ok(new ApiResult<List<Event>>
+            var events = eventsService.GetEvents(title, from, to);                
+            var paginatedEvents = eventsService.GetPaginatedEvents(events, page, pageSize, out int totalPages)
+                .Select(ev => new EventDTO
+                {
+                    Id = ev.Id,
+                    Title = ev.Title,
+                    Description = ev.Description,
+                    StartAt = ev.StartAt,
+                    EndAt = ev.EndAt
+                });
+
+            var result = new PaginatedResultDTO<EventDTO>
+                (
+                    paginatedEvents.ToList(),
+                    paginatedEvents.Count(),
+                    page,
+                    totalPages,
+                    events.Count()
+                );
+
+            return Ok(new ApiResult<PaginatedResultDTO<EventDTO>>
             {
-                Data = eventsService.GetEvents(),
+                Data = result,
                 Success = true,
                 StatusCode = HttpStatusCode.OK,
-                Message = "Gettin all events from collection"
+                Message = "Gettin paginated events from collection"
             });
         }
 
@@ -42,13 +70,22 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiBaseResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet("{id:Guid}")]
-        public ActionResult<ApiBaseResult> GetEventById(Guid id)
+        public ActionResult<ApiBaseResult> GetEventById([FromRoute] Guid id)
         {
-            var result = eventsService.GetEvent(id);
+            var eventById = eventsService.GetEvent(id);
 
-            if (result != null)
+            if (eventById != null)
             {
-                return Ok(new ApiResult<Event>
+                var result = new EventDTO
+                {
+                    Id = eventById.Id,
+                    Title = eventById.Title,
+                    Description = eventById.Description,
+                    StartAt = eventById.StartAt,
+                    EndAt = eventById.EndAt
+                };
+
+                return Ok(new ApiResult<EventDTO>
                 {
                     Data = result,
                     Success = true,
@@ -58,6 +95,7 @@ namespace RU.Uncio.EventsAPI.Controllers
             }
             else
             {
+                logger.LogError($"Event with ID {id} is not found in the collection");
                 return NotFound(new ApiResult
                 {
                     Success = false,
@@ -80,85 +118,42 @@ namespace RU.Uncio.EventsAPI.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResult
-                {
-                    Success = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Message = "Model validation error"
-                    //how to send ModelState here?
-                });
+                logger.LogError($"Validation failed: {String.Join(";", ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
+                throw new ValidationException($"Validation failed: {String.Join(";", ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
             }
 
-            try
-            {
-                var newEvent = new Event(ev.Id, ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
-                eventsService.AddEvent(newEvent);
+            var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
+            eventsService.AddEvent(newEvent);
 
-                return CreatedAtAction(nameof(CreateEvent), new ApiResult
-                {
-                    Success = true,
-                    StatusCode = HttpStatusCode.Created,
-                    Message = "Adding the event to the collection"
-                });
-            }
-            catch (ArgumentException ex)
+            return CreatedAtAction(nameof(CreateEvent), new ApiResult
             {
-                return BadRequest(new ApiResult
-                {
-                    Success = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Message = ex.Message
-                });
-            }
+                Success = true,
+                StatusCode = HttpStatusCode.Created,
+                Message = "Adding the event to the collection"
+            });
         }
 
         /// <summary>
-        /// Replaces an event from request body by ID in collection
+        /// Updates an event from request body by ID in collection
         /// </summary>
-        /// <param name="id">Id parameter to replace an event</param>
-        /// <param name="ev">Event from request body to replace</param>
+        /// <param name="id">Id parameter to update an event</param>
+        /// <param name="ev">Event from request body to update</param>
         /// <response code="204">JSON-schema is returned of ApiResult with detailed responce
         /// and HTTP status-code 204 NoContent in case of success</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
         [Consumes("application/json")]
         [HttpPut("{id:Guid}")]
-        public ActionResult<ApiResult> ReplaceEvent(Guid id, [FromBody] EventDTO ev)
+        public ActionResult UpdateEvent([FromRoute] Guid id, [FromBody] EventDTO ev)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResult
-                {
-                    Success = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Message = "Model validation error"
-                    //how to send ModelState here?
-                });
+                logger.LogError($"Validation failed: {String.Join(";", ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
+                throw new ValidationException($"Validation failed: {String.Join(";", ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
             }
 
-            try
-            {
-                var newEvent = new Event(ev.Id, ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
-                eventsService.ReplaceEvent(id, newEvent);
-                return NoContent();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new ApiResult
-                {
-                    Success = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Message = ex.Message
-                });
-            }
-            catch (IndexOutOfRangeException)
-            {
-                return NotFound(new ApiResult
-                {
-                    Success = false,
-                    StatusCode = HttpStatusCode.NotFound,
-                    Message = $"Event with ID {id} is not found in the collection"
-                });
-            }
+            var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
+            eventsService.UpdateEvent(id, newEvent);
+            return NoContent();
         }
 
         /// <summary>
@@ -169,23 +164,10 @@ namespace RU.Uncio.EventsAPI.Controllers
         /// and HTTP status-code 204 NoContent in case of success</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
         [HttpDelete("{id:Guid}")]
-        public ActionResult<ApiResult> DeleteEvent(Guid id)
+        public ActionResult DeleteEvent([FromRoute] Guid id)
         {
-            try
-            {
-                eventsService.RemoveEvent(id);
-                return NoContent();
-            }
-            catch (IndexOutOfRangeException)
-            {
-                return NotFound(new ApiResult
-                {
-                    Success = false,
-                    StatusCode = HttpStatusCode.NotFound,
-                    Message = $"Event with ID {id} is not found in the collection"
-                });
-            }
-
+            eventsService.RemoveEvent(id);
+            return NoContent();
         }
     }
 }
