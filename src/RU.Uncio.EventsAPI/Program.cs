@@ -16,6 +16,7 @@ builder.Services.AddControllers()
         options.SuppressModelStateInvalidFilter = true;
     });
 builder.Services.AddScoped<IEventRepository, InMemoryEventRepository>();
+builder.Services.AddScoped<IBookingRepository, InMemoryBookingRepository>();
 builder.Services.AddScoped<IEventsService, EventsService>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddSwaggerGen(options =>

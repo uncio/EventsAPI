@@ -4,7 +4,7 @@ namespace RU.Uncio.EventsAPI.Interfaces
 {
     public interface IBookingService
     {
-        Task CreateBookingAsync(Guid eventId);
+        Task<Guid> CreateBookingAsync(Guid eventId);
         Task<Booking> GetBookingByIdAsync(Guid bookingId);
     }
 }

@@ -8,22 +8,22 @@ namespace RU.Uncio.EventsAPI.Interfaces
         /// Gets all events from collection
         /// </summary>
         /// <returns>Collection of events</returns>
-        Task<Dictionary<Guid, Booking>> GetBookingsAsync();
+        Dictionary<Guid, Booking> GetBookings();
         /// <summary>
         /// Adds an event to collection
         /// </summary>
         /// <param name="ev">Event to add</param>
-        Task AddBookingAsync(Booking book);
+        void AddBooking(Booking book);
         /// <summary>
         /// Updates an event in collection by event ID
         /// </summary>
         /// <param name="id">ID parameter of event</param>
         /// <param name="ev">Event to update</param>
-        Task UpdateEventAsync(Guid id, BookingStatus status);
+        void UpdateBooking(Guid id, BookingStatus status);
         /// <summary>
         /// Deletes an event from collection by event ID
         /// </summary>
         /// <param name="id"></param>
-        Task RemoveBookingAsync(Guid id);
+        void RemoveBooking(Guid id);
     }
 }

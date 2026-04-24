@@ -7,22 +7,22 @@ namespace RU.Uncio.EventsAPI.Repositories
     {
         public static Dictionary<Guid, Booking> Bookings { get; private set; } = [];
 
-        public async Task AddBookingAsync(Booking book)
+        public void AddBooking(Booking book)
         {
             Bookings.Add(book.Id, book);
         }
 
-        public async Task<Dictionary<Guid, Booking>> GetBookingsAsync()
+        public Dictionary<Guid, Booking> GetBookings()
         {
             return Bookings;
         }
 
-        public async Task RemoveBookingAsync(Guid id)
+        public void RemoveBooking(Guid id)
         {
             Bookings.Remove(id);
         }
 
-        public async Task UpdateEventAsync(Guid id, BookingStatus status)
+        public void UpdateBooking(Guid id, BookingStatus status)
         {
             Bookings[id].Status = status;
         }
