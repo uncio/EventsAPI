@@ -2,12 +2,27 @@
 
 namespace RU.Uncio.EventsAPI.Models
 {
+    /// <summary>
+    /// Booking statuses
+    /// </summary>
     public enum BookingStatus
     {
+        /// <summary>
+        /// Booking is on the way to be added
+        /// </summary>
         Pending,
+        /// <summary>
+        /// Booking confirmed
+        /// </summary>
         Confirmed,
+        /// <summary>
+        /// Booking rejected
+        /// </summary>
         Rejected
     }
+    /// <summary>
+    /// Booking model
+    /// </summary>
     public class Booking
     {
         /// <summary>
@@ -46,6 +61,10 @@ namespace RU.Uncio.EventsAPI.Models
         /// </summary>
         public DateTime? ProcessedAt { get; set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="eventId"></param>
         public Booking(Guid eventId)
         {
             Id = Guid.NewGuid();

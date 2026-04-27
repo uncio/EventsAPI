@@ -3,6 +3,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RU.Uncio.EventsAPI.DTO
 {
+    /// <summary>
+    /// Data transfer object for Booking model
+    /// </summary>
     public class BookingDTO
     {
         /// <summary>
@@ -16,7 +19,7 @@ namespace RU.Uncio.EventsAPI.DTO
         /// <summary>
         /// Booking Status
         /// </summary>
-        public string Status { get; set; }
+        public required string Status { get; set; }
         /// <summary>
         /// Booking creation time
         /// </summary>

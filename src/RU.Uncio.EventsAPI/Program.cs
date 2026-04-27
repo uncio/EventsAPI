@@ -51,7 +51,7 @@ app.UseHttpsRedirection();
 
 app.MapControllers();
 
-app.MapPost("/{id}/book", async ([FromRoute] Guid id, IEventsService evService, IBookingService service/*, ILogger logger*/) =>
+app.MapPost("Events/{id}/book", async ([FromRoute] Guid id, IEventsService evService, IBookingService service, CancellationToken token) =>
 {
     try
     {
@@ -66,7 +66,7 @@ app.MapPost("/{id}/book", async ([FromRoute] Guid id, IEventsService evService, 
                 Message = $"Event with ID {id} is not found in the collection"
             });
         }
-        var result = await service.CreateBookingAsync(id);
+        var result = await service.CreateBookingAsync(id, token);
 
         if(result != null)
         {
@@ -83,8 +83,8 @@ app.MapPost("/{id}/book", async ([FromRoute] Guid id, IEventsService evService, 
             {
                 Data = booking,
                 Success = true,
-                StatusCode = HttpStatusCode.OK,
-                Message = $"Getting event with ID {id} from collection"
+                StatusCode = HttpStatusCode.Accepted,
+                Message = $"Adding booking for event with ID {id} in collection"
             });
         }
         else
@@ -104,11 +104,11 @@ app.MapPost("/{id}/book", async ([FromRoute] Guid id, IEventsService evService, 
     }
 });
 
-app.MapGet("/bookings/{id}", async ([FromRoute] Guid id, IBookingService service/*, ILogger logger*/) =>
+app.MapGet("/bookings/{id}", async ([FromRoute] Guid id, IBookingService service, CancellationToken token) =>
 {
     try
     {
-        var result = await service.GetBookingByIdAsync(id);
+        var result = await service.GetBookingByIdAsync(id, token);
         if(result != null)
         {
             var booking = new BookingDTO
@@ -124,7 +124,7 @@ app.MapGet("/bookings/{id}", async ([FromRoute] Guid id, IBookingService service
                 Data = booking,
                 Success = true,
                 StatusCode = HttpStatusCode.OK,
-                Message = $"Getting event with ID {id} from collection"
+                Message = $"Getting booking with ID {id} from collection"
             });
         }
         else
@@ -133,12 +133,13 @@ app.MapGet("/bookings/{id}", async ([FromRoute] Guid id, IBookingService service
             {
                 Success = false,
                 StatusCode = HttpStatusCode.NotFound,
-                Message = $"Event with ID {id} is not found in the collection"
+                Message = $"Booking with ID {id} is not found in the collection"
             });
         }
     }
     catch (OperationCanceledException)
     {
+        app.Logger.LogWarning("Client Closed Request");
         return Results.StatusCode(499); //Client Closed Request
     }
 });

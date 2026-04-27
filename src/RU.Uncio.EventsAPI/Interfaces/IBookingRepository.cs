@@ -2,23 +2,31 @@
 
 namespace RU.Uncio.EventsAPI.Interfaces
 {
+    /// <summary>
+    /// Bookings Repository wrapper
+    /// </summary>
     public interface IBookingRepository
     {
         /// <summary>
-        /// Gets all events from collection
+        /// Gets all bookings from collection
         /// </summary>
-        /// <returns>Collection of events</returns>
-        Task<Dictionary<Guid, Booking>> GetBookingsAsync();
+        /// <param name="token"></param>
+        /// <returns>collection of existing bookings</returns>
+        Task<Dictionary<Guid, Booking>> GetBookingsAsync(CancellationToken token);
         /// <summary>
-        /// Adds an event to collection
+        /// Adds a booking to collection
         /// </summary>
-        /// <param name="ev">Event to add</param>
-        Task<bool> AddBookingAsync(Booking book);
+        /// <param name="book">booking to add</param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        Task<bool> AddBookingAsync(Booking book, CancellationToken token);
         /// <summary>
-        /// Updates an event in collection by event ID
+        /// Updates a booking status in collection by booking ID
         /// </summary>
-        /// <param name="id">ID parameter of event</param>
-        /// <param name="ev">Event to update</param>
-        Task UpdateBookingAsync(Guid id, BookingStatus status);
+        /// <param name="id">booking id</param>
+        /// <param name="status">new status</param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        Task UpdateBookingAsync(Guid id, BookingStatus status, CancellationToken token);
     }
 }

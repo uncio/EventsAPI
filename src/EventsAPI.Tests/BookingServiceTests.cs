@@ -32,13 +32,14 @@ namespace EventsAPI.Tests
             var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object);
             var initialBookings = new Dictionary<Guid, Booking>();
 
-            bookingRepoMock.Setup(method => method.GetBookingsAsync()).ReturnsAsync(initialBookings);
-            bookingRepoMock.Setup<Task<bool>>(method => method.AddBookingAsync(It.IsAny<Booking>())).Callback<Booking>((b) => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
+            bookingRepoMock.Setup(method => method.GetBookingsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(initialBookings);
+            bookingRepoMock.Setup<Task<bool>>(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>())).Callback<Booking, CancellationToken>((b, token)
+                => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
 
             var eventIdToBook = Guid.NewGuid();
 
             // Act
-            var newBooking = await bookingServiceToAdd.CreateBookingAsync(eventIdToBook);
+            var newBooking = await bookingServiceToAdd.CreateBookingAsync(eventIdToBook, cancellationToken.Token);
 
             // Assert
             Assert.NotNull(newBooking);
@@ -54,16 +55,16 @@ namespace EventsAPI.Tests
             var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object);
             var initialBookings = new Dictionary<Guid, Booking>();
 
-
-            bookingRepoMock.Setup(method => method.GetBookingsAsync()).ReturnsAsync(initialBookings);
-            bookingRepoMock.Setup<Task<bool>>(method => method.AddBookingAsync(It.IsAny<Booking>())).Callback<Booking>((b) => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
+            bookingRepoMock.Setup(method => method.GetBookingsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(initialBookings);
+            bookingRepoMock.Setup<Task<bool>>(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>())).Callback<Booking, CancellationToken>((b, token) 
+                => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
 
             var eventIdToBook1 = Guid.NewGuid();
             var eventIdToBook2 = Guid.NewGuid();
 
             // Act
-            var newBooking1 = await bookingServiceToAdd.CreateBookingAsync(eventIdToBook1);
-            var newBooking2 = await bookingServiceToAdd.CreateBookingAsync(eventIdToBook2);
+            var newBooking1 = await bookingServiceToAdd.CreateBookingAsync(eventIdToBook1, cancellationToken.Token);
+            var newBooking2 = await bookingServiceToAdd.CreateBookingAsync(eventIdToBook2, cancellationToken.Token);
 
             // Assert
             Assert.NotEqual(new Guid(), newBooking1.Id);
@@ -75,18 +76,19 @@ namespace EventsAPI.Tests
         {
             //Arrange
             var bookingRepoMock = new Mock<IBookingRepository>();
-            var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object);
+            var bookingService = new BookingService(bookingsLogger.Object, bookingRepoMock.Object);
             var initialBookings = new Dictionary<Guid, Booking>();
 
 
-            bookingRepoMock.Setup(method => method.GetBookingsAsync()).ReturnsAsync(initialBookings);
-            bookingRepoMock.Setup<Task<bool>>(method => method.AddBookingAsync(It.IsAny<Booking>())).Callback<Booking>((b) => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
+            bookingRepoMock.Setup(method => method.GetBookingsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(initialBookings);
+            bookingRepoMock.Setup<Task<bool>>(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>())).Callback<Booking, CancellationToken>((b, token)
+                => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
 
             var eventIdToBook = Guid.NewGuid();
 
             // Act
-            var newBooking = await bookingServiceToAdd.CreateBookingAsync(eventIdToBook);
-            var result = await bookingServiceToAdd.GetBookingByIdAsync(newBooking.Id);
+            var newBooking = await bookingService.CreateBookingAsync(eventIdToBook, cancellationToken.Token);
+            var result = await bookingService.GetBookingByIdAsync(newBooking.Id, cancellationToken.Token);
 
             // Assert
             Assert.NotNull(result);
@@ -99,19 +101,20 @@ namespace EventsAPI.Tests
         {
             //Arrange
             var bookingRepoMock = new Mock<IBookingRepository>();
-            var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object);
+            var bookingService = new BookingService(bookingsLogger.Object, bookingRepoMock.Object);
             var initialBookings = new Dictionary<Guid, Booking>();
 
-            bookingRepoMock.Setup(method => method.GetBookingsAsync()).ReturnsAsync(initialBookings);
-            bookingRepoMock.Setup(method => method.AddBookingAsync(It.IsAny<Booking>())).Callback<Booking>((b) => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
-            bookingRepoMock.Setup(method => method.UpdateBookingAsync(It.IsAny<Guid>(), It.IsAny<BookingStatus>())).Callback<Guid, BookingStatus>((guid, st)
-                => initialBookings[guid].Status = st);
+            bookingRepoMock.Setup(method => method.GetBookingsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(initialBookings);
+            bookingRepoMock.Setup(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>())).Callback<Booking, CancellationToken>((b, token) 
+                => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
+            bookingRepoMock.Setup(method => method.UpdateBookingAsync(It.IsAny<Guid>(), It.IsAny<BookingStatus>(), It.IsAny<CancellationToken>()))
+                .Callback<Guid, BookingStatus, CancellationToken>((guid, st, token) => initialBookings[guid].Status = st);
 
             var eventIdToBook = Guid.NewGuid();
 
             // Act
-            await bookingServiceToAdd.StartAsync(cancellationToken.Token);
-            var newBooking = await bookingServiceToAdd.CreateBookingAsync(eventIdToBook);
+            await bookingService.StartAsync(cancellationToken.Token);
+            var newBooking = await bookingService.CreateBookingAsync(eventIdToBook, cancellationToken.Token);
             var resultBefore = newBooking.Status;
 
             await Task.Delay(TimeSpan.FromSeconds(10));
@@ -128,14 +131,15 @@ namespace EventsAPI.Tests
         {
             //Arrange
             var bookingRepoMock = new Mock<IBookingRepository>();
-            var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object);
+            var bookingService = new BookingService(bookingsLogger.Object, bookingRepoMock.Object);
             var initialBookings = new Dictionary<Guid, Booking>();
 
-            bookingRepoMock.Setup(method => method.GetBookingsAsync()).ReturnsAsync(initialBookings);
+            bookingRepoMock.Setup(method => method.GetBookingsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(initialBookings);
 
             var id = Guid.NewGuid();
+
             // Act
-            var result = await bookingServiceToAdd.GetBookingByIdAsync(id);
+            var result = await bookingService.GetBookingByIdAsync(id, cancellationToken.Token);
 
             // Assert
             Assert.Null(result);
@@ -144,6 +148,7 @@ namespace EventsAPI.Tests
         [Fact]
         public async Task AddEventBooking_WhenEventDoesntExist_ReturnsNotFound()
         {
+            //Arrange
             var mockRepository = new Mock<IEventRepository>();
             var logger = new Mock<ILogger<EventsService>>();
             var eventsService = new EventsService(logger.Object, mockRepository.Object);
@@ -159,14 +164,17 @@ namespace EventsAPI.Tests
             await using var application = new WebApplicationFactory<Program>();
             using var client = application.CreateClient();
 
+            // Act
             var result = await client.PostAsync($"/{Guid.NewGuid()}/book", null, cancellationToken.Token);
 
+            // Assert
             Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
         }
 
         [Fact]
         public async Task AddEventBooking_WhenEventRemoved_ReturnsNotFound()
         {
+            //Arrange
             var mockRepository = new Mock<IEventRepository>();
             var logger = new Mock<ILogger<EventsService>>();
             var eventsService = new EventsService(logger.Object, mockRepository.Object);
@@ -186,8 +194,10 @@ namespace EventsAPI.Tests
             await using var application = new WebApplicationFactory<Program>();
             using var client = application.CreateClient();
 
+            // Act
             var result = await client.PostAsync($"/{eventToRemove.Key}/book", null, cancellationToken.Token);
 
+            // Assert
             Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
         }
     }
