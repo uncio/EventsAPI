@@ -68,22 +68,34 @@ app.MapPost("/{id}/book", async ([FromRoute] Guid id, IEventsService evService, 
         }
         var result = await service.CreateBookingAsync(id);
 
-        var booking = new BookingDTO
+        if(result != null)
         {
-            Id = result.Id,
-            EventId = result.EventId,
-            Status = result.Status.ToString(),
-            CreatedAt = result.CreatedAt,
-            ProcessedAt = result.ProcessedAt,
-        };
-        //logger.LogInformation("Booking processed");
-        return Results.Accepted(uri: $"/bookings/{booking.Id}", value: new ApiResult<BookingDTO>
+            var booking = new BookingDTO
+            {
+                Id = result.Id,
+                EventId = result.EventId,
+                Status = result.Status.ToString(),
+                CreatedAt = result.CreatedAt,
+                ProcessedAt = result.ProcessedAt,
+            };
+            //logger.LogInformation("Booking processed");
+            return Results.Accepted(uri: $"/bookings/{booking.Id}", value: new ApiResult<BookingDTO>
+            {
+                Data = booking,
+                Success = true,
+                StatusCode = HttpStatusCode.OK,
+                Message = $"Getting event with ID {id} from collection"
+            });
+        }
+        else
         {
-            Data = booking,
-            Success = true,
-            StatusCode = HttpStatusCode.OK,
-            Message = $"Getting event with ID {id} from collection"
-        });
+            return Results.BadRequest(new ApiResult
+            {
+                Success = false,
+                StatusCode = HttpStatusCode.BadRequest,
+                Message = $"Event with ID {id} is not found in the collection"
+            });
+        }        
     }
     catch (OperationCanceledException)
     {

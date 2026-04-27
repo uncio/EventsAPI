@@ -19,10 +19,24 @@ namespace RU.Uncio.EventsAPI.Models
         /// </summary>
         [Required]
         public Guid EventId { get; private set; }
+
+        private BookingStatus status;
         /// <summary>
         /// Booking Status
         /// </summary>
-        public BookingStatus Status { get; set; }
+        public BookingStatus Status
+        {
+            get { return status; }
+            set
+            {
+                var changed = status != value;
+                if (changed)
+                {
+                    status = value;
+                    ProcessedAt = DateTime.Now;
+                }
+            }
+        }
         /// <summary>
         /// Booking creation time
         /// </summary>

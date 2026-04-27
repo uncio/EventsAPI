@@ -22,9 +22,9 @@ namespace RU.Uncio.EventsAPI.Services
                 .GetRequiredService<IBookingRepository>();
             var newBooking = new Booking(eventId);
 
-            bookingService.AddBooking(newBooking);
+            var added = bookingService.AddBooking(newBooking);
 
-            return newBooking;
+            return added ? newBooking : null;
         }
 
         public async Task<Booking> GetBookingByIdAsync(Guid bookingId)
@@ -43,34 +43,40 @@ namespace RU.Uncio.EventsAPI.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            //while (!stoppingToken.IsCancellationRequested)
-            //{
-            //    //try
-            //    //{
-            //    //    if (_taskQueue.TryDequeue(out var task))
-            //    //    {
-            //    //        _logger.LogInformation(
-            //    //            "Начата генерация отчёта {TaskId}, тип: {ReportType}",
-            //    //            task.Id, task.ReportType);
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    using var scope = scopeFactory.CreateScope();
+                    var bookingRepo = scope.ServiceProvider
+                        .GetRequiredService<IBookingRepository>();
 
-            //    //        // Имитация долгой генерации отчёта
-            //    //        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                    var pendingBooking = bookingRepo.GetBookings().Values
+                        ?.FirstOrDefault(b => b.Status == BookingStatus.Pending);
+                    if (pendingBooking != null)
+                    {
+                        //_logger.LogInformation(
+                        //    "Начата генерация отчёта {TaskId}, тип: {ReportType}",
+                        //    task.Id, task.ReportType);
 
-            //    //        _logger.LogInformation(
-            //    //            "Отчёт {TaskId} сгенерирован успешно", task.Id);
-            //    //    }
-            //    //}
-            //    //catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            //    //{
-            //    //    break;
-            //    //}
-            //    //catch (Exception ex)
-            //    //{
-            //    //    _logger.LogError(ex, "Ошибка при генерации отчёта");
-            //    //}
+                        // Имитация долгой генерации отчёта
+                        await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
 
-            //    await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
-            //}
+                        //_logger.LogInformation(
+                        //    "Отчёт {TaskId} сгенерирован успешно", task.Id);
+
+                        bookingRepo.UpdateBooking(pendingBooking.Id, BookingStatus.Confirmed);
+                    }
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    //_logger.LogError(ex, "Ошибка при генерации отчёта");
+                }
+            }
         }
     }
 }
