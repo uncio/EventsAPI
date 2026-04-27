@@ -8,17 +8,17 @@ namespace RU.Uncio.EventsAPI.Repositories
     {
         public readonly ConcurrentDictionary<Guid, Booking> Bookings = new();
 
-        public bool AddBooking(Booking book)
+        public async Task<bool> AddBookingAsync(Booking book)
         {
             return Bookings.TryAdd(book.Id, book);
         }
 
-        public Dictionary<Guid, Booking> GetBookings()
+        public async Task<Dictionary<Guid, Booking>> GetBookingsAsync()
         {
             return Bookings.ToDictionary(x => x.Key, x => x.Value);
         }
 
-        public void UpdateBooking(Guid id, BookingStatus status)
+        public async Task UpdateBookingAsync(Guid id, BookingStatus status)
         {
             Bookings[id].Status = status;
         }

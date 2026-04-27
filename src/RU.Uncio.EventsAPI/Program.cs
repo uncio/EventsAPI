@@ -58,7 +58,7 @@ app.MapPost("/{id}/book", async ([FromRoute] Guid id, IEventsService evService, 
         var ev = evService.GetEvent(id);
         if(ev == null)
         {
-            //logger.LogError($"Event with ID {id} is not found in the collection");
+            app.Logger.LogError($"Event with ID {id} is not found in the collection");
             return Results.NotFound(new ApiResult
             {
                 Success = false,
@@ -78,7 +78,7 @@ app.MapPost("/{id}/book", async ([FromRoute] Guid id, IEventsService evService, 
                 CreatedAt = result.CreatedAt,
                 ProcessedAt = result.ProcessedAt,
             };
-            //logger.LogInformation("Booking processed");
+            app.Logger.LogInformation("Booking processed");
             return Results.Accepted(uri: $"/bookings/{booking.Id}", value: new ApiResult<BookingDTO>
             {
                 Data = booking,
@@ -99,7 +99,7 @@ app.MapPost("/{id}/book", async ([FromRoute] Guid id, IEventsService evService, 
     }
     catch (OperationCanceledException)
     {
-        //logger.LogWarning("Client Closed Request");
+        app.Logger.LogWarning("Client Closed Request");
         return Results.StatusCode(499); //Client Closed Request
     }
 });

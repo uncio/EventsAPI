@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using RU.Uncio.EventsAPI.Interfaces;
@@ -6,6 +7,8 @@ using RU.Uncio.EventsAPI.Models;
 using RU.Uncio.EventsAPI.Services;
 using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http.Json;
 using System.Text;
 
 namespace EventsAPI.Tests
@@ -29,8 +32,8 @@ namespace EventsAPI.Tests
             var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object);
             var initialBookings = new Dictionary<Guid, Booking>();
 
-            bookingRepoMock.Setup(method => method.GetBookings()).Returns(initialBookings);
-            bookingRepoMock.Setup<bool>(method => method.AddBooking(It.IsAny<Booking>())).Callback<Booking>((b) => initialBookings.Add(b.Id, b)).Returns(true);
+            bookingRepoMock.Setup(method => method.GetBookingsAsync()).ReturnsAsync(initialBookings);
+            bookingRepoMock.Setup<Task<bool>>(method => method.AddBookingAsync(It.IsAny<Booking>())).Callback<Booking>((b) => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
 
             var eventIdToBook = Guid.NewGuid();
 
@@ -52,8 +55,8 @@ namespace EventsAPI.Tests
             var initialBookings = new Dictionary<Guid, Booking>();
 
 
-            bookingRepoMock.Setup(method => method.GetBookings()).Returns(initialBookings);
-            bookingRepoMock.Setup<bool>(method => method.AddBooking(It.IsAny<Booking>())).Callback<Booking>((b) => initialBookings.Add(b.Id, b)).Returns(true);
+            bookingRepoMock.Setup(method => method.GetBookingsAsync()).ReturnsAsync(initialBookings);
+            bookingRepoMock.Setup<Task<bool>>(method => method.AddBookingAsync(It.IsAny<Booking>())).Callback<Booking>((b) => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
 
             var eventIdToBook1 = Guid.NewGuid();
             var eventIdToBook2 = Guid.NewGuid();
@@ -76,8 +79,8 @@ namespace EventsAPI.Tests
             var initialBookings = new Dictionary<Guid, Booking>();
 
 
-            bookingRepoMock.Setup(method => method.GetBookings()).Returns(initialBookings);
-            bookingRepoMock.Setup<bool>(method => method.AddBooking(It.IsAny<Booking>())).Callback<Booking>((b) => initialBookings.Add(b.Id, b)).Returns(true);
+            bookingRepoMock.Setup(method => method.GetBookingsAsync()).ReturnsAsync(initialBookings);
+            bookingRepoMock.Setup<Task<bool>>(method => method.AddBookingAsync(It.IsAny<Booking>())).Callback<Booking>((b) => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
 
             var eventIdToBook = Guid.NewGuid();
 
@@ -99,9 +102,9 @@ namespace EventsAPI.Tests
             var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object);
             var initialBookings = new Dictionary<Guid, Booking>();
 
-            bookingRepoMock.Setup(method => method.GetBookings()).Returns(initialBookings);
-            bookingRepoMock.Setup(method => method.AddBooking(It.IsAny<Booking>())).Callback<Booking>((b) => initialBookings.Add(b.Id, b)).Returns(true);
-            bookingRepoMock.Setup(method => method.UpdateBooking(It.IsAny<Guid>(), It.IsAny<BookingStatus>())).Callback<Guid, BookingStatus>((guid, st)
+            bookingRepoMock.Setup(method => method.GetBookingsAsync()).ReturnsAsync(initialBookings);
+            bookingRepoMock.Setup(method => method.AddBookingAsync(It.IsAny<Booking>())).Callback<Booking>((b) => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
+            bookingRepoMock.Setup(method => method.UpdateBookingAsync(It.IsAny<Guid>(), It.IsAny<BookingStatus>())).Callback<Guid, BookingStatus>((guid, st)
                 => initialBookings[guid].Status = st);
 
             var eventIdToBook = Guid.NewGuid();
@@ -128,7 +131,7 @@ namespace EventsAPI.Tests
             var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object);
             var initialBookings = new Dictionary<Guid, Booking>();
 
-            bookingRepoMock.Setup(method => method.GetBookings()).Returns(initialBookings);
+            bookingRepoMock.Setup(method => method.GetBookingsAsync()).ReturnsAsync(initialBookings);
 
             var id = Guid.NewGuid();
             // Act
@@ -136,6 +139,56 @@ namespace EventsAPI.Tests
 
             // Assert
             Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task AddEventBooking_WhenEventDoesntExist_ReturnsNotFound()
+        {
+            var mockRepository = new Mock<IEventRepository>();
+            var logger = new Mock<ILogger<EventsService>>();
+            var eventsService = new EventsService(logger.Object, mockRepository.Object);
+            var events = new List<Event>
+                {
+                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
+                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
+                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16)),
+                }
+                .ToDictionary(ev => ev.Id, events => events);
+            mockRepository.Setup(method => method.GetEvents()).Returns(events);
+
+            await using var application = new WebApplicationFactory<Program>();
+            using var client = application.CreateClient();
+
+            var result = await client.PostAsync($"/{Guid.NewGuid()}/book", null, cancellationToken.Token);
+
+            Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
+        }
+
+        [Fact]
+        public async Task AddEventBooking_WhenEventRemoved_ReturnsNotFound()
+        {
+            var mockRepository = new Mock<IEventRepository>();
+            var logger = new Mock<ILogger<EventsService>>();
+            var eventsService = new EventsService(logger.Object, mockRepository.Object);
+            var events = new List<Event>
+                {
+                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
+                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
+                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16)),
+                }
+                .ToDictionary(ev => ev.Id, events => events);
+            mockRepository.Setup(method => method.GetEvents()).Returns(events);
+            mockRepository.Setup(method => method.RemoveEvent(It.IsAny<Guid>())).Callback<Guid>((guid) => events.Remove(guid));
+
+            var eventToRemove = events.LastOrDefault();
+            eventsService.RemoveEvent(eventToRemove.Key);
+
+            await using var application = new WebApplicationFactory<Program>();
+            using var client = application.CreateClient();
+
+            var result = await client.PostAsync($"/{eventToRemove.Key}/book", null, cancellationToken.Token);
+
+            Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
         }
     }
 }

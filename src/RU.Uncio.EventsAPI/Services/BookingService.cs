@@ -19,14 +19,14 @@ namespace RU.Uncio.EventsAPI.Services
         {
             var newBooking = new Booking(eventId);
 
-            var added = repository.AddBooking(newBooking);
+            var added = await repository.AddBookingAsync(newBooking);
 
             return added ? newBooking : null;
         }
 
         public async Task<Booking> GetBookingByIdAsync(Guid bookingId)
         {
-            var bookings = repository.GetBookings();
+            var bookings = await repository.GetBookingsAsync();
 
             if (bookings.TryGetValue(bookingId, out var booking))
                 return booking;
@@ -40,7 +40,9 @@ namespace RU.Uncio.EventsAPI.Services
             {
                 try
                 {
-                    var pendingBooking = repository.GetBookings().Values
+                    var bookings = await repository.GetBookingsAsync();
+
+                    var pendingBooking = bookings.Values
                         ?.FirstOrDefault(b => b.Status == BookingStatus.Pending);
                     if (pendingBooking != null)
                     {
@@ -54,7 +56,7 @@ namespace RU.Uncio.EventsAPI.Services
                         //_logger.LogInformation(
                         //    "Отчёт {TaskId} сгенерирован успешно", task.Id);
 
-                        repository.UpdateBooking(pendingBooking.Id, BookingStatus.Confirmed);
+                        await repository.UpdateBookingAsync(pendingBooking.Id, BookingStatus.Confirmed);
                     }
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
