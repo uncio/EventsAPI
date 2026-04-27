@@ -20,7 +20,7 @@ builder.Services.AddControllers()
         options.SuppressModelStateInvalidFilter = true;
     });
 builder.Services.AddScoped<IEventRepository, InMemoryEventRepository>();
-builder.Services.AddScoped<IBookingRepository, InMemoryBookingRepository>();
+builder.Services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
 builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddSingleton<IBookingService, BookingService>();
 builder.Services.AddHostedService<BookingService>();

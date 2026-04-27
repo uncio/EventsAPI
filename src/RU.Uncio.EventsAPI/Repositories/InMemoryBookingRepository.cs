@@ -6,7 +6,7 @@ namespace RU.Uncio.EventsAPI.Repositories
 {
     public class InMemoryBookingRepository : IBookingRepository
     {
-        public static ConcurrentDictionary<Guid, Booking> Bookings { get; private set; } = [];
+        public readonly ConcurrentDictionary<Guid, Booking> Bookings = new();
 
         public bool AddBooking(Booking book)
         {

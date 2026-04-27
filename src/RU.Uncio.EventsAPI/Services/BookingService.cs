@@ -7,33 +7,26 @@ namespace RU.Uncio.EventsAPI.Services
     public class BookingService : BackgroundService, IBookingService
     {
         private readonly ILogger<BookingService> logger;
-        private readonly IServiceScopeFactory scopeFactory;
+        private readonly IBookingRepository repository;
 
-        public BookingService(ILogger<BookingService> log, IServiceScopeFactory scope)
+        public BookingService(ILogger<BookingService> log, IBookingRepository bookingRepo)
         {
             logger = log;
-            scopeFactory = scope;
+            repository = bookingRepo;
         }
 
         public async Task<Booking> CreateBookingAsync(Guid eventId)
         {
-            using var scope = scopeFactory.CreateScope();
-            var bookingService = scope.ServiceProvider
-                .GetRequiredService<IBookingRepository>();
             var newBooking = new Booking(eventId);
 
-            var added = bookingService.AddBooking(newBooking);
+            var added = repository.AddBooking(newBooking);
 
             return added ? newBooking : null;
         }
 
         public async Task<Booking> GetBookingByIdAsync(Guid bookingId)
         {
-            using var scope = scopeFactory.CreateScope();
-            var bookingRepo = scope.ServiceProvider
-                .GetRequiredService<IBookingRepository>();
-
-            var bookings = bookingRepo.GetBookings();
+            var bookings = repository.GetBookings();
 
             if (bookings.TryGetValue(bookingId, out var booking))
                 return booking;
@@ -47,11 +40,7 @@ namespace RU.Uncio.EventsAPI.Services
             {
                 try
                 {
-                    using var scope = scopeFactory.CreateScope();
-                    var bookingRepo = scope.ServiceProvider
-                        .GetRequiredService<IBookingRepository>();
-
-                    var pendingBooking = bookingRepo.GetBookings().Values
+                    var pendingBooking = repository.GetBookings().Values
                         ?.FirstOrDefault(b => b.Status == BookingStatus.Pending);
                     if (pendingBooking != null)
                     {
@@ -60,12 +49,12 @@ namespace RU.Uncio.EventsAPI.Services
                         //    task.Id, task.ReportType);
 
                         // Имитация долгой генерации отчёта
-                        await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
 
                         //_logger.LogInformation(
                         //    "Отчёт {TaskId} сгенерирован успешно", task.Id);
 
-                        bookingRepo.UpdateBooking(pendingBooking.Id, BookingStatus.Confirmed);
+                        repository.UpdateBooking(pendingBooking.Id, BookingStatus.Confirmed);
                     }
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
