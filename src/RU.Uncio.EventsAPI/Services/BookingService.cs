@@ -1,15 +1,17 @@
 ﻿using RU.Uncio.EventsAPI.Exceptions;
 using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Models;
+using System.Net;
 
 namespace RU.Uncio.EventsAPI.Services
 {
     /// <summary>
     /// Service to manipulate with bookings collection and background queue 
     /// </summary>
-    public class BookingService : BackgroundService, IBookingService
+    public class BookingService : IBookingService
     {
         private readonly ILogger<BookingService> logger;
+        private readonly IEventsService eventService;
         private readonly IBookingRepository repository;
 
         /// <summary>
@@ -17,10 +19,12 @@ namespace RU.Uncio.EventsAPI.Services
         /// </summary>
         /// <param name="log"></param>
         /// <param name="bookingRepo"></param>
-        public BookingService(ILogger<BookingService> log, IBookingRepository bookingRepo)
+        /// <param name="evService"></param>
+        public BookingService(ILogger<BookingService> log, IBookingRepository bookingRepo, IEventsService evService)
         {
             logger = log;
             repository = bookingRepo;
+            eventService = evService;
         }
 
         /// <summary>
@@ -31,6 +35,13 @@ namespace RU.Uncio.EventsAPI.Services
         /// <returns></returns>
         public async Task<Booking> CreateBookingAsync(Guid eventId, CancellationToken token)
         {
+            var ev = eventService.GetEvent(eventId);
+            if (ev == null)
+            {
+                logger.LogError($"Event with ID {eventId} is not found in the collection");
+                throw new MissingEventException($"Event with ID {eventId} is not found in the collection");
+            }
+
             var newBooking = new Booking(eventId);
             var added = await repository.AddBookingAsync(newBooking, token);
 
@@ -52,38 +63,6 @@ namespace RU.Uncio.EventsAPI.Services
 
             logger.LogError($"Booking queue doesn't contain a booking with id {bookingId}");
             return null;
-        }
-
-        /// <summary>
-        /// Background service
-        /// </summary>
-        /// <param name="stoppingToken"></param>
-        /// <returns></returns>
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                try
-                {
-                    var bookings = await repository.GetBookingsAsync(stoppingToken);
-
-                    var pendingBooking = bookings.Values
-                        ?.FirstOrDefault(b => b.Status == BookingStatus.Pending);
-                    if (pendingBooking != null)
-                    {
-                        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-                        await repository.UpdateBookingAsync(pendingBooking.Id, BookingStatus.Confirmed, stoppingToken);
-                    }
-                }
-                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Booking manipulation error");
-                }
-            }
-        }
+        }        
     }
 }

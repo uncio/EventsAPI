@@ -12,7 +12,7 @@ namespace RU.Uncio.EventsAPI.Repositories
         /// <summary>
         /// Collection of bookings
         /// </summary>
-        public readonly ConcurrentDictionary<Guid, Booking> Bookings = new();
+        public static ConcurrentDictionary<Guid, Booking> Bookings = new();
 
         /// <summary>
         /// Adds a booking to collection

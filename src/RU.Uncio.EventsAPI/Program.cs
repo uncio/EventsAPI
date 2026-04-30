@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
 using RU.Uncio.EventsAPI;
+using RU.Uncio.EventsAPI.Auxiliary;
 using RU.Uncio.EventsAPI.DTO;
 using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Middlewares;
@@ -20,10 +21,10 @@ builder.Services.AddControllers()
         options.SuppressModelStateInvalidFilter = true;
     });
 builder.Services.AddScoped<IEventRepository, InMemoryEventRepository>();
-builder.Services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
+builder.Services.AddScoped<IBookingRepository, InMemoryBookingRepository>();
 builder.Services.AddScoped<IEventsService, EventsService>();
-builder.Services.AddSingleton<IBookingService, BookingService>();
-builder.Services.AddHostedService<BookingService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddHostedService<BookingBackgroundService>();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddSwaggerGen(options =>
@@ -51,33 +52,15 @@ app.UseHttpsRedirection();
 
 app.MapControllers();
 
-app.MapPost("Events/{id}/book", async ([FromRoute] Guid id, IEventsService evService, IBookingService service, CancellationToken token) =>
+app.MapPost("Events/{id}/book", async ([FromRoute] Guid id, IBookingService service, CancellationToken token) =>
 {
     try
-    {
-        var ev = evService.GetEvent(id);
-        if(ev == null)
-        {
-            app.Logger.LogError($"Event with ID {id} is not found in the collection");
-            return Results.NotFound(new ApiResult
-            {
-                Success = false,
-                StatusCode = HttpStatusCode.NotFound,
-                Message = $"Event with ID {id} is not found in the collection"
-            });
-        }
+    {        
         var result = await service.CreateBookingAsync(id, token);
 
         if(result != null)
         {
-            var booking = new BookingDTO
-            {
-                Id = result.Id,
-                EventId = result.EventId,
-                Status = result.Status.ToString(),
-                CreatedAt = result.CreatedAt,
-                ProcessedAt = result.ProcessedAt,
-            };
+            var booking = result.MapToDto();
             app.Logger.LogInformation("Booking processed");
             return Results.Accepted(uri: $"/bookings/{booking.Id}", value: new ApiResult<BookingDTO>
             {
@@ -111,14 +94,7 @@ app.MapGet("/bookings/{id}", async ([FromRoute] Guid id, IBookingService service
         var result = await service.GetBookingByIdAsync(id, token);
         if(result != null)
         {
-            var booking = new BookingDTO
-            {
-                Id = result.Id,
-                EventId = result.EventId,
-                Status = result.Status.ToString(),
-                CreatedAt = result.CreatedAt,
-                ProcessedAt = result.ProcessedAt,
-            };
+            var booking = result.MapToDto();
             return Results.Ok(value: new ApiResult<BookingDTO>
             {
                 Data = booking,
