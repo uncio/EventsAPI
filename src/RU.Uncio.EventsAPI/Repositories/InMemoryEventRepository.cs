@@ -4,7 +4,7 @@ using RU.Uncio.EventsAPI.Models;
 namespace RU.Uncio.EventsAPI.Repositories
 {
     /// <summary>
-    /// Concrete in memory repository
+    /// Concrete in memory events repository
     /// </summary>
     public class InMemoryEventRepository : IEventRepository
     {

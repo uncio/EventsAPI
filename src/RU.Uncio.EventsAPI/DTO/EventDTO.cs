@@ -3,7 +3,7 @@
 namespace RU.Uncio.EventsAPI.DTO
 {
     /// <summary>
-    /// Data Transfer Object of Event class
+    /// Data Transfer Object for Event model
     /// </summary>
     public record EventDTO
     {
