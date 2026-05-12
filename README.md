@@ -171,3 +171,58 @@ curl -X 'GET' \
 	  "dateTime": "2026-03-31T11:54:40.113Z",
 	  "message": "string"
 	}
+	
+## Book an event
+
+### Request
+
+`POST /events/id/book`
+
+curl -X 'POST' \
+  'https://localhost:7134/Events/34ad8b51-a6bb-4a9f-8b2e-e5fd07bc855b/book' \
+  -H 'accept: */*' \
+  -d ''
+
+### Response
+
+Result JSON-schema
+{
+  "data": {
+    "id": "4828c27c-adcd-4c32-8336-3499a9961449",
+    "eventId": "34ad8b51-a6bb-4a9f-8b2e-e5fd07bc855b",
+    "status": "Pending",
+    "createdAt": "2026-04-27T20:41:28.5650768+03:00",
+    "processedAt": null
+  },
+  "success": true,
+  "statusCode": 202,
+  "dateTime": "2026-04-27T17:41:28.5690582Z",
+  "message": "Adding booking for event with ID 34ad8b51-a6bb-4a9f-8b2e-e5fd07bc855b in collection"
+}
+	
+## Check an event booking status
+
+### Request
+
+`GET /bookings/id`
+
+    curl -X 'DELETE' \
+	  'https://localhost:7134/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
+	  -H 'accept: text/plain'
+
+### Response
+
+	Result JSON-schema
+{
+  "data": {
+    "id": "4828c27c-adcd-4c32-8336-3499a9961449",
+    "eventId": "34ad8b51-a6bb-4a9f-8b2e-e5fd07bc855b",
+    "status": "Confirmed",
+    "createdAt": "2026-04-27T20:41:28.5650768+03:00",
+    "processedAt": "2026-04-27T20:41:33.5845099+03:00"
+  },
+  "success": true,
+  "statusCode": 200,
+  "dateTime": "2026-04-27T17:43:30.5176803Z",
+  "message": "Getting booking with ID 4828c27c-adcd-4c32-8336-3499a9961449 from collection"
+}

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Moq;
 using RU.Uncio.EventsAPI.DTO;
 using RU.Uncio.EventsAPI.Exceptions;

@@ -1,7 +1,7 @@
 ﻿namespace RU.Uncio.EventsAPI.Models
 {
     /// <summary>
-    /// Class containing event properties
+    /// Event model
     /// </summary>
     public class Event
     {

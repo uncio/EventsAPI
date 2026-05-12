@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RU.Uncio.EventsAPI.Auxiliary;
 using RU.Uncio.EventsAPI.DTO;
 using RU.Uncio.EventsAPI.Exceptions;
 using RU.Uncio.EventsAPI.Interfaces;
@@ -34,14 +35,7 @@ namespace RU.Uncio.EventsAPI.Controllers
         {
             var events = eventsService.GetEvents(title, from, to);                
             var paginatedEvents = eventsService.GetPaginatedEvents(events, page, pageSize, out int totalPages)
-                .Select(ev => new EventDTO
-                {
-                    Id = ev.Id,
-                    Title = ev.Title,
-                    Description = ev.Description,
-                    StartAt = ev.StartAt,
-                    EndAt = ev.EndAt
-                });
+                .Select(ev => ev.MapToDto());
 
             var result = new PaginatedResultDTO<EventDTO>
                 (
@@ -76,14 +70,7 @@ namespace RU.Uncio.EventsAPI.Controllers
 
             if (eventById != null)
             {
-                var result = new EventDTO
-                {
-                    Id = eventById.Id,
-                    Title = eventById.Title,
-                    Description = eventById.Description,
-                    StartAt = eventById.StartAt,
-                    EndAt = eventById.EndAt
-                };
+                var result = eventById.MapToDto();
 
                 return Ok(new ApiResult<EventDTO>
                 {
