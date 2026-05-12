@@ -26,18 +26,24 @@
         /// </summary>
         public DateTime EndAt { get; set; }
 
+
+        public int TotalSeats { get; set; }
+        public int AvailableSeats { get; set; }
+
         /// <summary>
         /// Event base constructor
         /// </summary>
         /// <param name="title"></param>
         /// <param name="starts"></param>
         /// <param name="ends"></param>
-        public Event(string title, DateTime starts, DateTime ends)
+        public Event(string title, DateTime starts, DateTime ends, int total)
         {
             Id = Guid.NewGuid();
             Title = title;
             StartAt = starts;
             EndAt = ends;
+            TotalSeats = total;
+            AvailableSeats = TotalSeats;
 
             #region alternative timeline validation
             //if(!EndAt.IsStrictlyGreaterThan(StartAt))
@@ -54,5 +60,25 @@
             StartAt = ev.StartAt;
             EndAt = ev.EndAt;
         }
+
+        internal bool TryReserveSeats(int count = 1)
+        {
+            if(AvailableSeats >= count)
+            {
+                AvailableSeats -= count;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        internal void ReleaseSeats(int count = 1)
+        {
+            //todo
+        }
+
+
     }
 }

@@ -45,7 +45,9 @@ namespace RU.Uncio.EventsAPI.Auxiliary
                 Title = mappingObject.Title,
                 Description = mappingObject.Description,
                 StartAt = mappingObject.StartAt,
-                EndAt = mappingObject.EndAt
+                EndAt = mappingObject.EndAt,
+                TotalSeats = mappingObject.TotalSeats,
+                AvailableSeats = mappingObject.AvailableSeats,
             };
 
             return dest;

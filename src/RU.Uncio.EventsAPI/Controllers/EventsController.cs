@@ -101,18 +101,20 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status201Created)]
         [Consumes("application/json")]
         [HttpPost]
-        public ActionResult<ApiResult> CreateEvent([FromBody] EventDTO ev)
+        public ActionResult<ApiResult> CreateEventAsync([FromBody] EventDTO ev)
         {
             if (!ModelState.IsValid)
             {
-                logger.LogError($"Validation failed: {String.Join(";", ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
-                throw new ValidationException($"Validation failed: {String.Join(";", ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
+                logger.LogError($"Validation failed: {String.Join(";",
+                    ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
+                throw new ValidationException($"Validation failed: {String.Join(";",
+                    ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
             }
 
-            var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
+            var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt, ev.TotalSeats) { Description = ev.Description };
             eventsService.AddEvent(newEvent);
 
-            return CreatedAtAction(nameof(CreateEvent), new ApiResult
+            return CreatedAtAction(nameof(CreateEventAsync), new ApiResult
             {
                 Success = true,
                 StatusCode = HttpStatusCode.Created,
@@ -134,8 +136,10 @@ namespace RU.Uncio.EventsAPI.Controllers
         {
             if (!ModelState.IsValid)
             {
-                logger.LogError($"Validation failed: {String.Join(";", ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
-                throw new ValidationException($"Validation failed: {String.Join(";", ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
+                logger.LogError($"Validation failed: {String.Join(";",
+                    ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
+                throw new ValidationException($"Validation failed: {String.Join(";",
+                    ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
             }
 
             var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
