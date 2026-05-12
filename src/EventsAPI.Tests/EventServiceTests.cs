@@ -22,9 +22,9 @@ namespace EventsAPI.Tests
             eventsService = new EventsService(logger.Object, mockRepository.Object);
             events = new List<Event>
                 {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event22",new DateTime(2026, 1, 13), new DateTime(2026, 1, 16)),
+                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event22",new DateTime(2026, 1, 13), new DateTime(2026, 1, 16), 10),
                 }
                 .ToDictionary(ev => ev.Id, events => events);
 
@@ -39,12 +39,12 @@ namespace EventsAPI.Tests
             var eventsServiceToAdd = new EventsService(logger.Object, mockRepositoryToAdd.Object);
             var initialEvents = new List<Event>
                 {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16)),
+                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16), 10),
                 }
                 .ToDictionary(ev => ev.Id, events => events);
-            Event newEvent = new("Event3", new DateTime(2026, 1, 1), new DateTime(2026, 1, 16));
+            Event newEvent = new("Event3", new DateTime(2026, 1, 1), new DateTime(2026, 1, 16), 10);
 
             mockRepositoryToAdd.Setup(method => method.GetEvents()).Returns(initialEvents);
             mockRepositoryToAdd.Setup(method => method.AddEvent(It.IsAny<Event>())).Callback<Event>((ev) => initialEvents.Add(ev.Id, ev));
@@ -68,12 +68,12 @@ namespace EventsAPI.Tests
             var eventsServiceToUpdate = new EventsService(logger.Object, mockRepositoryToUpdate.Object);
             var initialEvents = new List<Event>
                 {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16)),
+                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16), 10),
                 }
                 .ToDictionary(ev => ev.Id, events => events);
-            Event updatingEvent = new("Event3", new DateTime(2026, 1, 1), new DateTime(2026, 1, 16));
+            Event updatingEvent = new("Event3", new DateTime(2026, 1, 1), new DateTime(2026, 1, 16), 10);
             var idToUpdate = initialEvents.Keys.LastOrDefault();
 
             mockRepositoryToUpdate.Setup(method => method.GetEvents()).Returns(initialEvents);
@@ -103,9 +103,9 @@ namespace EventsAPI.Tests
             var eventsServiceToDelete = new EventsService(logger.Object, mockRepositoryToDelete.Object);
             var initialEvents = new List<Event>
                 {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16)),
+                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16), 10),
                 }
                 .ToDictionary(ev => ev.Id, events => events);
 
@@ -425,12 +425,12 @@ namespace EventsAPI.Tests
             var eventsServiceToUpdate = new EventsService(logger.Object, mockRepositoryToUpdate.Object);
             var initialEvents = new List<Event>
                 {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16)),
+                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16), 10),
                 }
                 .ToDictionary(ev => ev.Id, events => events);
-            Event updatingEvent = new("Event3", new DateTime(2026, 1, 1), new DateTime(2026, 1, 16));
+            Event updatingEvent = new("Event3", new DateTime(2026, 1, 1), new DateTime(2026, 1, 16), 10);
             var idToUpdate = Guid.NewGuid();
 
             mockRepositoryToUpdate.Setup(method => method.GetEvents()).Returns(initialEvents);
@@ -454,9 +454,9 @@ namespace EventsAPI.Tests
             var eventsServiceToUpdate = new EventsService(logger.Object, mockRepositoryToUpdate.Object);
             var initialEvents = new List<Event>
                 {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16)),
+                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16), 10),
                 }
                 .ToDictionary(ev => ev.Id, events => events);
             Event addingEvent = initialEvents.FirstOrDefault().Value;

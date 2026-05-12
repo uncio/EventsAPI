@@ -28,8 +28,8 @@ namespace EventsAPI.Tests
             eventsService = new EventsService(logger.Object, mockRepository.Object);
             events = new List<Event>
                 {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
+                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
                 }
                 .ToDictionary(ev => ev.Id, events => events);
 
@@ -163,7 +163,7 @@ namespace EventsAPI.Tests
         public async Task AddEventBooking_WhenEventDoesntExist_ThrowsMissingEvent()
         {
             //Arrange
-            var eventToBook = new Event("Test", DateTime.Now, DateTime.Now + TimeSpan.FromHours(4));
+            var eventToBook = new Event("Test", DateTime.Now, DateTime.Now + TimeSpan.FromHours(4), 10);
             var expectedExceptionMessage = $"Event with ID {eventToBook.Id} is not found in the collection";
            
             var bookingRepoMock = new Mock<IBookingRepository>();
@@ -191,9 +191,9 @@ namespace EventsAPI.Tests
             var eventsServiceLocal = new EventsService(loggerLocal.Object, mockRepositoryLocal.Object);
             var eventsLocal = new List<Event>
                 {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15)),
-                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16)),
+                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
+                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16), 10),
                 }
                 .ToDictionary(ev => ev.Id, events => events);
             mockRepositoryLocal.Setup(method => method.GetEvents()).Returns(eventsLocal);

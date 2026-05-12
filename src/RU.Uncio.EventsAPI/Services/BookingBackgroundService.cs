@@ -10,6 +10,8 @@ namespace RU.Uncio.EventsAPI.Services
     {
         private readonly ILogger<BookingBackgroundService> logger;
         private readonly IServiceScopeFactory scopeFactory;
+        private readonly SemaphoreSlim processingSemaphore = new(1, 1);
+
         /// <summary>
         /// 
         /// </summary>
@@ -34,14 +36,12 @@ namespace RU.Uncio.EventsAPI.Services
                     using var scope = scopeFactory.CreateScope();
                     var repository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
 
-                    var bookings = await repository.GetBookingsAsync(stoppingToken);
+                    var pendingBookings = await repository.GetPendingBookingsAsync(stoppingToken);
 
-                    var pendingBooking = bookings.Values
-                        ?.FirstOrDefault(b => b.Status == BookingStatus.Pending);
-                    if (pendingBooking != null)
+                    if (pendingBookings != null && pendingBookings.Any())
                     {
-                        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-                        await repository.UpdateBookingAsync(pendingBooking.Id, BookingStatus.Confirmed, stoppingToken);
+                        var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, stoppingToken));
+                        await Task.WhenAll(tasks);                        
                     }
 
                     await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
@@ -54,6 +54,44 @@ namespace RU.Uncio.EventsAPI.Services
                 {
                     logger.LogError(ex, "Booking manipulation error");
                 }
+            }
+        }
+
+        private async Task ProcessBookingAsync(Booking booking, CancellationToken stoppingToken)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+
+            await processingSemaphore.WaitAsync();
+
+            try
+            {
+                using var scope = scopeFactory.CreateScope();
+                var bookRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
+                var eventRepository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
+
+                if (eventRepository.GetEvents().TryGetValue(booking.EventId, out Event ev))
+                {
+                    try
+                    {
+                        await bookRepository.UpdateBookingAsync(booking.Id, BookingStatus.Confirmed, stoppingToken);
+                    }
+                    catch(Exception ex)
+                    {
+                        await bookRepository.UpdateBookingAsync(booking.Id, BookingStatus.Rejected, stoppingToken);
+                        ev.ReleaseSeats();
+                        logger.LogWarning($"Failed to book an event with ID {booking.EventId}");
+                        throw;
+                    }                    
+                }
+                else
+                {
+                    await bookRepository.UpdateBookingAsync(booking.Id, BookingStatus.Rejected, stoppingToken);
+                    logger.LogWarning($"Failed to book an event with ID {booking.EventId}");
+                }
+            }
+            finally
+            {
+                processingSemaphore.Release();
             }
         }
     }

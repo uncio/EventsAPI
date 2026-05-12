@@ -142,7 +142,7 @@ namespace RU.Uncio.EventsAPI.Controllers
                     ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
             }
 
-            var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt) { Description = ev.Description };
+            var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt, 1) { Description = ev.Description };
             eventsService.UpdateEvent(id, newEvent);
             return NoContent();
         }

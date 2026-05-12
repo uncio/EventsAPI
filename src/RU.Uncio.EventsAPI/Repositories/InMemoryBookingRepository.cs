@@ -35,6 +35,13 @@ namespace RU.Uncio.EventsAPI.Repositories
             return Bookings.ToDictionary(x => x.Key, x => x.Value);
         }
 
+        public async Task<ConcurrentBag<Booking>> GetPendingBookingsAsync(CancellationToken token)
+        {
+            return new ConcurrentBag<Booking>(Bookings
+                .Where(b => b.Value.Status == BookingStatus.Pending)
+                .Select(b => b.Value));
+        }
+
         /// <summary>
         /// Updates a booking status in collection by booking ID
         /// </summary>

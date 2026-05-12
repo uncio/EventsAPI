@@ -14,7 +14,7 @@ namespace RU.Uncio.EventsAPI.Services
         private readonly IEventsService eventService;
         private readonly IBookingRepository repository;
 
-        private readonly object _bookingLock = new();
+        private readonly object bookingLock = new();
 
         /// <summary>
         /// constructor
@@ -45,7 +45,7 @@ namespace RU.Uncio.EventsAPI.Services
             }
 
             var bookingResult = false;
-            lock (_bookingLock)
+            lock (bookingLock)
             {
                 bookingResult = ev.TryReserveSeats();
             }
