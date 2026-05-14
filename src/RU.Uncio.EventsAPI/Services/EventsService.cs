@@ -94,7 +94,7 @@ namespace RU.Uncio.EventsAPI.Services
         /// </summary>
         /// <param name="ev">Event to add</param>
         /// <exception cref="ArgumentException"></exception>
-        public void AddEvent(Event ev)
+        public void AddEventAsync(Event ev)
         {
             if(!repository.GetEvents().ContainsKey(ev.Id))
                 repository.AddEvent(ev);

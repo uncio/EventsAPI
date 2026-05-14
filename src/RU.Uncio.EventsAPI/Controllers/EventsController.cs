@@ -101,7 +101,7 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status201Created)]
         [Consumes("application/json")]
         [HttpPost]
-        public ActionResult<ApiResult> CreateEventAsync([FromBody] EventDTO ev)
+        public ActionResult<ApiResult> CreateEvent([FromBody] EventDTO ev)
         {
             if (!ModelState.IsValid)
             {
@@ -112,9 +112,9 @@ namespace RU.Uncio.EventsAPI.Controllers
             }
 
             var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt, ev.TotalSeats) { Description = ev.Description };
-            eventsService.AddEvent(newEvent);
+            eventsService.AddEventAsync(newEvent);
 
-            return CreatedAtAction(nameof(CreateEventAsync), new ApiResult
+            return CreatedAtAction(nameof(CreateEvent), new ApiResult
             {
                 Success = true,
                 StatusCode = HttpStatusCode.Created,

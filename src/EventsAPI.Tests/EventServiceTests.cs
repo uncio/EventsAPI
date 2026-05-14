@@ -50,7 +50,7 @@ namespace EventsAPI.Tests
             mockRepositoryToAdd.Setup(method => method.AddEvent(It.IsAny<Event>())).Callback<Event>((ev) => initialEvents.Add(ev.Id, ev));
 
             // Act
-            eventsServiceToAdd.AddEvent(newEvent);
+            eventsServiceToAdd.AddEventAsync(newEvent);
             var result = eventsServiceToAdd.GetEvents();
 
             // Assert
@@ -468,7 +468,7 @@ namespace EventsAPI.Tests
 
             // Act
             var exception = Assert
-                .Throws<EventExistsException>(() => eventsServiceToUpdate.AddEvent(addingEvent));
+                .Throws<EventExistsException>(() => eventsServiceToUpdate.AddEventAsync(addingEvent));
 
             // Assert
             Assert.IsType<EventExistsException>(exception);
