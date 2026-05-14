@@ -112,9 +112,16 @@ namespace RU.Uncio.EventsAPI.Services
         /// <exception cref="IndexOutOfRangeException"></exception>
         public void UpdateEvent(Guid id, Event ev)
         {
-            if (repository.GetEvents().TryGetValue(id, out _))
-            {                
-                repository.UpdateEvent(id, ev);
+            if (repository.GetEvents().TryGetValue(id, out var currentEvent))
+            {
+                if(currentEvent.TotalSeats - currentEvent.AvailableSeats > ev.TotalSeats)
+                {
+                    throw new TotalGreaterBookedException($"Not possible to change total seats. Amount of bookings for the event is greater than new total seats value");
+                }
+                else
+                {
+                    repository.UpdateEvent(id, ev);
+                }                
             }
             else
             {

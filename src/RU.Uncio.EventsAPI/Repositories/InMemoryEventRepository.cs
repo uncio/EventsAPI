@@ -51,6 +51,9 @@ namespace RU.Uncio.EventsAPI.Repositories
             Events[id].Description = ev.Description;
             Events[id].StartAt = ev.StartAt;
             Events[id].EndAt = ev.EndAt;
+            var bookedSeats = Events[id].TotalSeats - Events[id].AvailableSeats;
+            Events[id].TotalSeats = ev.TotalSeats;
+            Events[id].AvailableSeats = ev.TotalSeats - bookedSeats;
         }
     }
 }

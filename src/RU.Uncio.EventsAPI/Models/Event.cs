@@ -50,13 +50,6 @@
             EndAt = ends;
             TotalSeats = total;
             AvailableSeats = TotalSeats;
-
-            #region alternative timeline validation
-            //if(!EndAt.IsStrictlyGreaterThan(StartAt))
-            //{
-            //    throw new ArgumentException("Event end time is to be later than start time");
-            //}
-            #endregion
         }
 
         internal void UpdateWith(Event ev)

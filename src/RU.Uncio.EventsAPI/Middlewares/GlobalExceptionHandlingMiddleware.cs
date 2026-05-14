@@ -78,6 +78,7 @@ namespace RU.Uncio.EventsAPI.Middlewares
                 ValidationException ve => StatusCodes.Status400BadRequest,
                 EventExistsException eee => StatusCodes.Status400BadRequest,
                 MissingEventException mee => StatusCodes.Status404NotFound,
+                TotalGreaterBookedException tgbe => StatusCodes.Status409Conflict,
                 NoAvailableSeatsException nase => StatusCodes.Status409Conflict,
                 _ => StatusCodes.Status500InternalServerError
             };
@@ -88,6 +89,7 @@ namespace RU.Uncio.EventsAPI.Middlewares
                 ValidationException ve => HttpStatusCode.BadRequest,
                 EventExistsException eee => HttpStatusCode.BadRequest,
                 MissingEventException mee => HttpStatusCode.NotFound,
+                TotalGreaterBookedException tgbe => HttpStatusCode.Conflict,
                 NoAvailableSeatsException nase => HttpStatusCode.Conflict,
                 _ => HttpStatusCode.InternalServerError
             };

@@ -61,7 +61,7 @@ namespace RU.Uncio.EventsAPI.Services
         {
             await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
 
-            await processingSemaphore.WaitAsync();
+            await processingSemaphore.WaitAsync(stoppingToken);
 
             try
             {
@@ -72,13 +72,12 @@ namespace RU.Uncio.EventsAPI.Services
                         booking.Confirm();
                         await bookingRepository.UpdateBookingAsync(booking, stoppingToken);
                     }
-                    catch
+                    catch(Exception ex)
                     {
                         booking.Reject();
                         await bookingRepository.UpdateBookingAsync(booking, stoppingToken);
                         ev.ReleaseSeats();
-                        logger.LogError($"Failed to book an event with ID {booking.EventId}");
-                        throw;
+                        logger.LogError(ex, $"Failed to book an event with ID {booking.EventId}");
                     }                    
                 }
                 else
