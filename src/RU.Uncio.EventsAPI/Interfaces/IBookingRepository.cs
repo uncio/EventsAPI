@@ -14,7 +14,11 @@ namespace RU.Uncio.EventsAPI.Interfaces
         /// <param name="token"></param>
         /// <returns>collection of existing bookings</returns>
         Task<Dictionary<Guid, Booking>> GetBookingsAsync(CancellationToken token);
-
+        /// <summary>
+        /// Gets all pending bookings
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
         Task<ConcurrentBag<Booking>> GetPendingBookingsAsync(CancellationToken token);
         /// <summary>
         /// Adds a booking to collection
@@ -26,10 +30,9 @@ namespace RU.Uncio.EventsAPI.Interfaces
         /// <summary>
         /// Updates a booking status in collection by booking ID
         /// </summary>
-        /// <param name="id">booking id</param>
-        /// <param name="status">new status</param>
+        /// <param name="booking">updating booking</param>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task UpdateBookingAsync(Guid id, BookingStatus status, CancellationToken token);
+        Task UpdateBookingAsync(Booking booking, CancellationToken token);
     }
 }

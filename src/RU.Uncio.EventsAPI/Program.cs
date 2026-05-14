@@ -20,8 +20,8 @@ builder.Services.AddControllers()
         // Эта опция отключает автоматическую проверку валидации 
         options.SuppressModelStateInvalidFilter = true;
     });
-builder.Services.AddScoped<IEventRepository, InMemoryEventRepository>();
-builder.Services.AddScoped<IBookingRepository, InMemoryBookingRepository>();
+builder.Services.AddSingleton<IEventRepository, InMemoryEventRepository>();
+builder.Services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
 builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddHostedService<BookingBackgroundService>();

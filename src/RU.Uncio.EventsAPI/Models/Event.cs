@@ -26,8 +26,13 @@
         /// </summary>
         public DateTime EndAt { get; set; }
 
-
+        /// <summary>
+        /// Total amount of seats
+        /// </summary>
         public int TotalSeats { get; set; }
+        /// <summary>
+        /// Available amount of seats at current moment
+        /// </summary>
         public int AvailableSeats { get; set; }
 
         /// <summary>
@@ -36,6 +41,7 @@
         /// <param name="title"></param>
         /// <param name="starts"></param>
         /// <param name="ends"></param>
+        /// <param name="total"></param>
         public Event(string title, DateTime starts, DateTime ends, int total)
         {
             Id = Guid.NewGuid();
@@ -74,9 +80,14 @@
             }
         }
 
-        internal void ReleaseSeats(int count = 1)
+        /// <summary>
+        /// releases seats after booking cancelation or rejecting
+        /// </summary>
+        /// <param name="count"></param>
+        public void ReleaseSeats(int count = 1)
         {
-            //todo
+            AvailableSeats += count;
+            AvailableSeats = AvailableSeats <= TotalSeats ? AvailableSeats : TotalSeats;
         }
 
 

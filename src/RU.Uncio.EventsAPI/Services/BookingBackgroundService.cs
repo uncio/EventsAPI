@@ -9,17 +9,20 @@ namespace RU.Uncio.EventsAPI.Services
     public class BookingBackgroundService: BackgroundService
     {
         private readonly ILogger<BookingBackgroundService> logger;
-        private readonly IServiceScopeFactory scopeFactory;
+        private readonly IEventRepository eventRepository;
+        private readonly IBookingRepository bookingRepository;
         private readonly SemaphoreSlim processingSemaphore = new(1, 1);
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="scFactory"></param>
+        /// <param name="bookings"></param>
+        /// <param name="events"></param>
         /// <param name="log"></param>
-        public BookingBackgroundService(IServiceScopeFactory scFactory, ILogger<BookingBackgroundService> log)
+        public BookingBackgroundService(IBookingRepository bookings, IEventRepository events, ILogger<BookingBackgroundService> log)
         {
-            scopeFactory = scFactory;
+            bookingRepository = bookings;
+            eventRepository = events;
             logger = log;
         }
         /// <summary>
@@ -33,10 +36,7 @@ namespace RU.Uncio.EventsAPI.Services
             {
                 try
                 {
-                    using var scope = scopeFactory.CreateScope();
-                    var repository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
-
-                    var pendingBookings = await repository.GetPendingBookingsAsync(stoppingToken);
+                    var pendingBookings = await bookingRepository.GetPendingBookingsAsync(stoppingToken);
 
                     if (pendingBookings != null && pendingBookings.Any())
                     {
@@ -65,27 +65,26 @@ namespace RU.Uncio.EventsAPI.Services
 
             try
             {
-                using var scope = scopeFactory.CreateScope();
-                var bookRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
-                var eventRepository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
-
-                if (eventRepository.GetEvents().TryGetValue(booking.EventId, out Event ev))
+                if (eventRepository.GetEvents().TryGetValue(booking.EventId, out var ev))
                 {
                     try
                     {
-                        await bookRepository.UpdateBookingAsync(booking.Id, BookingStatus.Confirmed, stoppingToken);
+                        booking.Confirm();
+                        await bookingRepository.UpdateBookingAsync(booking, stoppingToken);
                     }
-                    catch(Exception ex)
+                    catch
                     {
-                        await bookRepository.UpdateBookingAsync(booking.Id, BookingStatus.Rejected, stoppingToken);
+                        booking.Reject();
+                        await bookingRepository.UpdateBookingAsync(booking, stoppingToken);
                         ev.ReleaseSeats();
-                        logger.LogWarning($"Failed to book an event with ID {booking.EventId}");
+                        logger.LogError($"Failed to book an event with ID {booking.EventId}");
                         throw;
                     }                    
                 }
                 else
                 {
-                    await bookRepository.UpdateBookingAsync(booking.Id, BookingStatus.Rejected, stoppingToken);
+                    booking.Reject();
+                    await bookingRepository.UpdateBookingAsync(booking, stoppingToken);
                     logger.LogWarning($"Failed to book an event with ID {booking.EventId}");
                 }
             }

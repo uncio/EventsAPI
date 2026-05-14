@@ -9,9 +9,11 @@ using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Models;
 using RU.Uncio.EventsAPI.Services;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http.Json;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 
 namespace EventsAPI.Tests
@@ -144,8 +146,8 @@ namespace EventsAPI.Tests
             bookingRepoMock.Setup(method => method.GetBookingsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(initialBookings);
             bookingRepoMock.Setup(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>())).Callback<Booking, CancellationToken>((b, token)
                 => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
-            bookingRepoMock.Setup(method => method.UpdateBookingAsync(It.IsAny<Guid>(), It.IsAny<BookingStatus>(), It.IsAny<CancellationToken>()))
-                .Callback<Guid, BookingStatus, CancellationToken>((id, status, token) => initialBookings[id].Status = status);
+            bookingRepoMock.Setup(method => method.UpdateBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
+                .Callback<Booking, CancellationToken>((booking, token) => booking.Confirm());
 
             // Act
             var newBooking = await bookingService.CreateBookingAsync(eventToBook.Id, TestContext.Current.CancellationToken);
@@ -153,7 +155,8 @@ namespace EventsAPI.Tests
 
             var resultBefore = result.Status;
 
-            await bookingRepoMock.Object.UpdateBookingAsync(newBooking.Id, BookingStatus.Confirmed, TestContext.Current.CancellationToken);
+            newBooking.Confirm();
+            await bookingRepoMock.Object.UpdateBookingAsync(newBooking, TestContext.Current.CancellationToken);
             result = await bookingService.GetBookingByIdAsync(newBooking.Id, TestContext.Current.CancellationToken);
 
             var resultAfter = result.Status;
@@ -190,7 +193,7 @@ namespace EventsAPI.Tests
             //Arrange
             var eventToBook = new Event("Test", DateTime.Now, DateTime.Now + TimeSpan.FromHours(4), 10);
             var expectedExceptionMessage = $"Event with ID {eventToBook.Id} is not found in the collection";
-           
+
             var bookingRepoMock = new Mock<IBookingRepository>();
             var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object, eventsService);
             var initialBookings = new Dictionary<Guid, Booking>();
@@ -199,7 +202,7 @@ namespace EventsAPI.Tests
                 => initialBookings.Add(b.Id, b)).Throws(new Exception(expectedExceptionMessage));
 
             // Act
-            var exception =await Assert
+            var exception = await Assert
                 .ThrowsAsync<MissingEventException>(async () => await bookingServiceToAdd.CreateBookingAsync(eventToBook.Id, TestContext.Current.CancellationToken));
 
             // Assert
@@ -268,7 +271,7 @@ namespace EventsAPI.Tests
 
             bookingRepoMock.Setup(method => method.GetBookingsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(initialBookings);
             bookingRepoMock.Setup<Task<bool>>(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>())).Callback<Booking, CancellationToken>((b, token)
-                => initialBookings.Add(b.Id, b)).ReturnsAsync(true);           
+                => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
 
             // Act
             var newBooking1 = await bookingServiceToAdd.CreateBookingAsync(eventsLocal.FirstOrDefault().Key, TestContext.Current.CancellationToken);
@@ -282,39 +285,168 @@ namespace EventsAPI.Tests
         }
 
         [Fact]
+        public async Task ConfirmBooking_ReturnsConfirmedStatusAndFilledProcessedAtAndDecreasesAvailableSeats()
+        {
+            //Arrange
+            var mockRepositoryLocal = new Mock<IEventRepository>();
+            var loggerLocal = new Mock<ILogger<EventsService>>();
+            var eventsServiceLocal = new EventsService(loggerLocal.Object, mockRepositoryLocal.Object);
+            var eventsLocal = new List<Event>
+                {
+                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10)
+                }
+                .ToDictionary(ev => ev.Id, events => events);
+            mockRepositoryLocal.Setup(method => method.GetEvents()).Returns(eventsLocal);
+            mockRepositoryLocal.Setup(method => method.RemoveEvent(It.IsAny<Guid>())).Callback<Guid>((guid) => eventsLocal.Remove(guid));
+
+            var bookingRepoMock = new Mock<IBookingRepository>();
+            var bookingService = new BookingService(bookingsLogger.Object, bookingRepoMock.Object, eventsServiceLocal);
+            var initialBookings = new Dictionary<Guid, Booking>();
+
+            bookingRepoMock.Setup(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>())).Callback<Booking, CancellationToken>((b, token)
+                => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
+
+            var eventToBook = eventsLocal.FirstOrDefault().Value;
+
+            // Act
+            var seatsBefore = eventToBook.AvailableSeats;
+            var newBooking = await bookingService.CreateBookingAsync(eventToBook.Id, TestContext.Current.CancellationToken);
+            var timeBefore = newBooking.ProcessedAt;
+            newBooking.Confirm();
+            var timeAfter = newBooking.ProcessedAt;
+            var seatsAfter = eventToBook.AvailableSeats;
+
+            // Assert
+            Assert.Equal(BookingStatus.Confirmed, newBooking.Status);
+            Assert.Null(timeBefore);
+            Assert.NotNull(timeAfter);
+            Assert.Equal(seatsBefore, seatsAfter + 1);
+        }
+
+        [Fact]
+        public async Task RejectBooking_ReturnsRejectedStatusAndFilledProcessedAtAndReleasesSeats()
+        {
+            //Arrange
+            var mockRepositoryLocal = new Mock<IEventRepository>();
+            var loggerLocal = new Mock<ILogger<EventsService>>();
+            var eventsServiceLocal = new EventsService(loggerLocal.Object, mockRepositoryLocal.Object);
+            var eventsLocal = new List<Event>
+                {
+                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 1)
+                }
+                .ToDictionary(ev => ev.Id, events => events);
+            mockRepositoryLocal.Setup(method => method.GetEvents()).Returns(eventsLocal);
+            mockRepositoryLocal.Setup(method => method.RemoveEvent(It.IsAny<Guid>())).Callback<Guid>((guid) => eventsLocal.Remove(guid));
+
+            var bookingRepoMock = new Mock<IBookingRepository>();
+            var bookingService = new BookingService(bookingsLogger.Object, bookingRepoMock.Object, eventsServiceLocal);
+            var initialBookings = new Dictionary<Guid, Booking>();
+
+            bookingRepoMock.Setup(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>())).Callback<Booking, CancellationToken>((b, token)
+                => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
+            var eventToBook = eventsLocal.FirstOrDefault().Value;
+
+            // Act
+            var seatsBefore = eventToBook.AvailableSeats;
+            var newBooking = await bookingService.CreateBookingAsync(eventToBook.Id, TestContext.Current.CancellationToken);
+            var timeBefore = newBooking.ProcessedAt;
+
+            newBooking.Reject();
+            eventToBook.ReleaseSeats();
+
+            var timeAfter = newBooking.ProcessedAt;
+            var seatsAfter = eventToBook.AvailableSeats;
+
+            // Assert
+            Assert.Equal(BookingStatus.Rejected, newBooking.Status);
+            Assert.Null(timeBefore);
+            Assert.NotNull(timeAfter);
+            Assert.Equal(seatsBefore, seatsAfter);
+        }
+
+        [Fact]
         public async Task AddSeveralBookingsSimultaneously_Success()
         {
             //Arrange
-            var mockDependency = new Mock<IS>();
-            var service = new BookingBackgroundService(mockDependency.Object);
-            var cancellationTokenSource = new CancellationTokenSource();
+            var mockRepositoryLocal = new Mock<IEventRepository>();
+            var loggerLocal1 = new Mock<ILogger<EventsService>>();
+            var eventsServiceLocal = new EventsService(loggerLocal1.Object, mockRepositoryLocal.Object);
+            var eventsLocal = new List<Event>
+                    {
+                        new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 5)
+                    }
+                .ToDictionary(ev => ev.Id, events => events);
+            mockRepositoryLocal.Setup(method => method.GetEvents()).Returns(eventsLocal);
+            mockRepositoryLocal.Setup(method => method.RemoveEvent(It.IsAny<Guid>())).Callback<Guid>((guid) => eventsLocal.Remove(guid));
 
-
-
+            var eventToBook = eventsLocal.FirstOrDefault().Value;
             var bookingRepoMock = new Mock<IBookingRepository>();
-            var bookingService = new BookingBackgroundService(bookingsLogger.Object, bookingRepoMock.Object);
+            var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object, eventsServiceLocal);
             var initialBookings = new Dictionary<Guid, Booking>();
 
             bookingRepoMock.Setup(method => method.GetBookingsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(initialBookings);
-            bookingRepoMock.Setup(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>())).Callback<Booking, CancellationToken>((b, token)
-                => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
-            bookingRepoMock.Setup(method => method.UpdateBookingAsync(It.IsAny<Guid>(), It.IsAny<BookingStatus>(), It.IsAny<CancellationToken>()))
-                .Callback<Guid, BookingStatus, CancellationToken>((guid, st, token) => initialBookings[guid].Status = st);
-
-            var eventIdToBook = Guid.NewGuid();
+            bookingRepoMock.Setup(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
+                .Callback<Booking, CancellationToken>((b, token) => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
 
             // Act
-            await bookingService.StartAsync(cancellationToken.Token);
-            var newBooking = await bookingService.CreateBookingAsync(eventIdToBook, cancellationToken.Token);
-            var resultBefore = newBooking.Status;
+            var tasks = new List<Task>();
+            for (int i = 0; i < 20; i++)
+            {
+                tasks.Add(bookingServiceToAdd.CreateBookingAsync(eventToBook.Id, TestContext.Current.CancellationToken));
+            }
 
-            await Task.Delay(TimeSpan.FromSeconds(10));
-
-            var resultAfter = newBooking.Status;
+            try
+            {
+                await Task.WhenAll(tasks);
+            }
+            catch { }
 
             // Assert
-            Assert.Equal(BookingStatus.Pending, resultBefore);
-            Assert.NotEqual(BookingStatus.Pending, resultAfter);
+            Assert.Equal(5, initialBookings.Count());
+            Assert.Equal(0, eventToBook.AvailableSeats);
+        }
+
+        [Fact]
+        public async Task AddSeveralBookingsSimultaneously_ReturnsBookingsWithUniqueIds()
+        {
+            //Arrange
+            var mockRepositoryLocal = new Mock<IEventRepository>();
+            var loggerLocal1 = new Mock<ILogger<EventsService>>();
+            var eventsServiceLocal = new EventsService(loggerLocal1.Object, mockRepositoryLocal.Object);
+            var eventsLocal = new List<Event>
+                    {
+                        new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10)
+                    }
+                .ToDictionary(ev => ev.Id, events => events);
+            mockRepositoryLocal.Setup(method => method.GetEvents()).Returns(eventsLocal);
+            mockRepositoryLocal.Setup(method => method.RemoveEvent(It.IsAny<Guid>())).Callback<Guid>((guid) => eventsLocal.Remove(guid));
+
+            var eventToBook = eventsLocal.FirstOrDefault().Value;
+            var bookingRepoMock = new Mock<IBookingRepository>();
+            var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object, eventsServiceLocal);
+            var initialBookings = new Dictionary<Guid, Booking>();
+
+            bookingRepoMock.Setup(method => method.GetBookingsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(initialBookings);
+            bookingRepoMock.Setup(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
+                .Callback<Booking, CancellationToken>((b, token) => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
+
+            // Act
+            var tasks = new List<Task>();
+            for (int i = 0; i < 10; i++)
+            {
+                tasks.Add(bookingServiceToAdd.CreateBookingAsync(eventToBook.Id, TestContext.Current.CancellationToken));
+            }
+
+            try
+            {
+                await Task.WhenAll(tasks);
+            }
+            catch { }
+
+            var uniqueBookings = initialBookings.Values.GroupBy(b => b.Id);
+
+            // Assert
+            Assert.Equal(10, uniqueBookings.Count());
         }
     }
 }

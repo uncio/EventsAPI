@@ -35,23 +35,10 @@ namespace RU.Uncio.EventsAPI.Models
         [Required]
         public Guid EventId { get; private set; }
 
-        private BookingStatus status;
         /// <summary>
         /// Booking Status
         /// </summary>
-        public BookingStatus Status
-        {
-            get { return status; }
-            set
-            {
-                var changed = status != value;
-                if (changed)
-                {
-                    status = value;
-                    ProcessedAt = DateTime.Now;
-                }
-            }
-        }
+        public BookingStatus Status { get; set; }
         /// <summary>
         /// Booking creation time
         /// </summary>
@@ -71,6 +58,23 @@ namespace RU.Uncio.EventsAPI.Models
             EventId = eventId;
             Status = BookingStatus.Pending;
             CreatedAt = DateTime.Now;
+        }
+        /// <summary>
+        /// Confirm status setter
+        /// </summary>
+        public void Confirm()
+        {
+            Status = BookingStatus.Confirmed;
+            ProcessedAt = DateTime.Now;
+        }
+
+        /// <summary>
+        /// Reject status setter
+        /// </summary>
+        public void Reject()
+        {
+            Status = BookingStatus.Rejected;
+            ProcessedAt = DateTime.Now;
         }
     }
 }
