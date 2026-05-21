@@ -37,7 +37,7 @@
         /// <summary>
         /// Bookings for the event
         /// </summary>
-        public List<Guid> Bookings { get; set; }
+        public List<Guid> Bookings { get; set; } = new();
 
         /// <summary>
         /// For deserialzer
