@@ -94,7 +94,7 @@ namespace RU.Uncio.EventsAPI.Services
         /// </summary>
         /// <param name="ev">Event to add</param>
         /// <exception cref="ArgumentException"></exception>
-        public void AddEvent(Event ev)
+        public void AddEventAsync(Event ev)
         {
             if(!repository.GetEvents().ContainsKey(ev.Id))
                 repository.AddEvent(ev);
@@ -112,9 +112,16 @@ namespace RU.Uncio.EventsAPI.Services
         /// <exception cref="IndexOutOfRangeException"></exception>
         public void UpdateEvent(Guid id, Event ev)
         {
-            if (repository.GetEvents().TryGetValue(id, out _))
-            {                
-                repository.UpdateEvent(id, ev);
+            if (repository.GetEvents().TryGetValue(id, out var currentEvent))
+            {
+                if(currentEvent.TotalSeats - currentEvent.AvailableSeats > ev.TotalSeats)
+                {
+                    throw new TotalGreaterBookedException($"Not possible to change total seats. Amount of bookings for the event is greater than new total seats value");
+                }
+                else
+                {
+                    repository.UpdateEvent(id, ev);
+                }                
             }
             else
             {

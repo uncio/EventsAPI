@@ -14,6 +14,8 @@ namespace RU.Uncio.EventsAPI.Services
         private readonly IEventsService eventService;
         private readonly IBookingRepository repository;
 
+        private readonly object bookingLock = new();
+
         /// <summary>
         /// constructor
         /// </summary>
@@ -40,6 +42,17 @@ namespace RU.Uncio.EventsAPI.Services
             {
                 logger.LogError($"Event with ID {eventId} is not found in the collection");
                 throw new MissingEventException($"Event with ID {eventId} is not found in the collection");
+            }
+
+            var bookingResult = false;
+            lock (bookingLock)
+            {
+                bookingResult = ev.TryReserveSeats();
+            }
+
+            if (!bookingResult)
+            {
+                throw new NoAvailableSeatsException("No available seats for this event");
             }
 
             var newBooking = new Booking(eventId);

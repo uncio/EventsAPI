@@ -9,15 +9,20 @@ namespace RU.Uncio.EventsAPI.Services
     public class BookingBackgroundService: BackgroundService
     {
         private readonly ILogger<BookingBackgroundService> logger;
-        private readonly IServiceScopeFactory scopeFactory;
+        private readonly IEventRepository eventRepository;
+        private readonly IBookingRepository bookingRepository;
+        private readonly SemaphoreSlim processingSemaphore = new(1, 1);
+
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="scFactory"></param>
+        /// <param name="bookings"></param>
+        /// <param name="events"></param>
         /// <param name="log"></param>
-        public BookingBackgroundService(IServiceScopeFactory scFactory, ILogger<BookingBackgroundService> log)
+        public BookingBackgroundService(IBookingRepository bookings, IEventRepository events, ILogger<BookingBackgroundService> log)
         {
-            scopeFactory = scFactory;
+            bookingRepository = bookings;
+            eventRepository = events;
             logger = log;
         }
         /// <summary>
@@ -31,17 +36,12 @@ namespace RU.Uncio.EventsAPI.Services
             {
                 try
                 {
-                    using var scope = scopeFactory.CreateScope();
-                    var repository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
+                    var pendingBookings = await bookingRepository.GetPendingBookingsAsync(stoppingToken);
 
-                    var bookings = await repository.GetBookingsAsync(stoppingToken);
-
-                    var pendingBooking = bookings.Values
-                        ?.FirstOrDefault(b => b.Status == BookingStatus.Pending);
-                    if (pendingBooking != null)
+                    if (pendingBookings != null && pendingBookings.Any())
                     {
-                        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-                        await repository.UpdateBookingAsync(pendingBooking.Id, BookingStatus.Confirmed, stoppingToken);
+                        var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, stoppingToken));
+                        await Task.WhenAll(tasks);                        
                     }
 
                     await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
@@ -54,6 +54,42 @@ namespace RU.Uncio.EventsAPI.Services
                 {
                     logger.LogError(ex, "Booking manipulation error");
                 }
+            }
+        }
+
+        private async Task ProcessBookingAsync(Booking booking, CancellationToken stoppingToken)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+
+            await processingSemaphore.WaitAsync(stoppingToken);
+
+            try
+            {
+                if (eventRepository.GetEvents().TryGetValue(booking.EventId, out var ev))
+                {
+                    try
+                    {
+                        booking.Confirm();
+                        await bookingRepository.UpdateBookingAsync(booking, stoppingToken);
+                    }
+                    catch(Exception ex)
+                    {
+                        booking.Reject();
+                        await bookingRepository.UpdateBookingAsync(booking, stoppingToken);
+                        ev.ReleaseSeats();
+                        logger.LogError(ex, $"Failed to book an event with ID {booking.EventId}");
+                    }                    
+                }
+                else
+                {
+                    booking.Reject();
+                    await bookingRepository.UpdateBookingAsync(booking, stoppingToken);
+                    logger.LogWarning($"Failed to book an event with ID {booking.EventId}");
+                }
+            }
+            finally
+            {
+                processingSemaphore.Release();
             }
         }
     }

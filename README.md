@@ -111,7 +111,8 @@ curl -X 'GET' \
 		  "title": "string",
 		  "description": "string",
 		  "startAt": "2026-02-15T12:03:22.941Z",
-		  "endAt": "2026-03-31T12:03:22.941Z"
+		  "endAt": "2026-03-31T12:03:22.941Z",
+		  "totalSeats": 12
 		}'
 
 ### Response
@@ -139,7 +140,8 @@ curl -X 'GET' \
 	  "title": "Test",
 	  "description": "Test1",
 	  "startAt": "2026-03-31T12:08:36.425Z",
-	  "endAt": "2026-04-30T12:08:36.425Z"
+	  "endAt": "2026-04-30T12:08:36.425Z",
+		  "totalSeats": 12
 		}'
 
 ### Response

@@ -30,6 +30,17 @@ namespace RU.Uncio.EventsAPI.DTO
         /// Event ends at
         /// </summary>
         [Required]
-        public DateTime EndAt { get; set; }        
+        public DateTime EndAt { get; set; }
+
+        /// <summary>
+        /// Total amount of seats
+        /// </summary>
+        [Required]
+        [Range(1, Int32.MaxValue)]
+        public int TotalSeats { get; set; }
+        /// <summary>
+        /// Available amount of seats at current moment
+        /// </summary>
+        public int AvailableSeats { get; set; }
     }
 }

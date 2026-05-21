@@ -24,7 +24,7 @@ namespace RU.Uncio.EventsAPI.Interfaces
         /// Adds an event to collection
         /// </summary>
         /// <param name="ev">Event to add</param>
-        void AddEvent(Event ev);
+        void AddEventAsync(Event ev);
         /// <summary>
         /// Updates an event in collection by event ID
         /// </summary>

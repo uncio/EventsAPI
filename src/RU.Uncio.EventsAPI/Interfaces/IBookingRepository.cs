@@ -1,4 +1,5 @@
 ﻿using RU.Uncio.EventsAPI.Models;
+using System.Collections.Concurrent;
 
 namespace RU.Uncio.EventsAPI.Interfaces
 {
@@ -14,6 +15,12 @@ namespace RU.Uncio.EventsAPI.Interfaces
         /// <returns>collection of existing bookings</returns>
         Task<Dictionary<Guid, Booking>> GetBookingsAsync(CancellationToken token);
         /// <summary>
+        /// Gets all pending bookings
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        Task<ConcurrentBag<Booking>> GetPendingBookingsAsync(CancellationToken token);
+        /// <summary>
         /// Adds a booking to collection
         /// </summary>
         /// <param name="book">booking to add</param>
@@ -23,10 +30,9 @@ namespace RU.Uncio.EventsAPI.Interfaces
         /// <summary>
         /// Updates a booking status in collection by booking ID
         /// </summary>
-        /// <param name="id">booking id</param>
-        /// <param name="status">new status</param>
+        /// <param name="booking">updating booking</param>
         /// <param name="token"></param>
         /// <returns></returns>
-        Task UpdateBookingAsync(Guid id, BookingStatus status, CancellationToken token);
+        Task UpdateBookingAsync(Booking booking, CancellationToken token);
     }
 }
