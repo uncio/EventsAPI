@@ -32,7 +32,6 @@ namespace RU.Uncio.EventsAPI.Models
         /// <summary>
         /// Event ID
         /// </summary>
-        [Required]
         public Guid EventId { get; private set; }
 
         /// <summary>
@@ -48,6 +47,11 @@ namespace RU.Uncio.EventsAPI.Models
         /// </summary>
         public DateTime? ProcessedAt { get; set; }
 
+        /// <summary>
+        /// For serializer
+        /// </summary>
+        public Booking() { }
+  
         /// <summary>
         /// 
         /// </summary>

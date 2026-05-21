@@ -12,7 +12,7 @@
         /// <summary>
         /// Event title
         /// </summary>
-        public string Title { get; set; }
+        public string Title { get; set; } = null!;
         /// <summary>
         /// Event description (optional)
         /// </summary>
@@ -34,6 +34,15 @@
         /// Available amount of seats at current moment
         /// </summary>
         public int AvailableSeats { get; set; }
+        /// <summary>
+        /// Bookings for the event
+        /// </summary>
+        public List<Guid> Bookings { get; set; }
+
+        /// <summary>
+        /// For deserialzer
+        /// </summary>
+        public Event() { }
 
         /// <summary>
         /// Event base constructor
