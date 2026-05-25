@@ -67,8 +67,8 @@
             Description = ev.Description;
             StartAt = ev.StartAt;
             EndAt = ev.EndAt;
-            ev.TotalSeats = ev.TotalSeats;
-            ev.AvailableSeats = ev.TotalSeats - Bookings.Count;
+            TotalSeats = ev.TotalSeats;
+            AvailableSeats = TotalSeats - Bookings.Count;
         }
 
         internal bool TryReserveSeats(int count = 1)

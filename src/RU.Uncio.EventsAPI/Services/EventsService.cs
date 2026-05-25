@@ -127,7 +127,7 @@ namespace RU.Uncio.EventsAPI.Services
         /// <exception cref="IndexOutOfRangeException"></exception>
         public async Task UpdateEventAsync(Guid id, Event ev)
         {
-            var currentEvent = appDbContext.Events.FirstOrDefault(e => e.Id == ev.Id);
+            var currentEvent = appDbContext.Events.FirstOrDefault(ev => ev.Id == id);
 
             if (currentEvent != null)
             {
@@ -166,7 +166,7 @@ namespace RU.Uncio.EventsAPI.Services
         /// <exception cref="IndexOutOfRangeException"></exception>
         public async Task RemoveEventAsync(Guid id)
         {
-            var currentEvent = appDbContext.Events.FirstOrDefault(e => e.Id == ev.Id);
+            var currentEvent = appDbContext.Events.FirstOrDefault(ev => ev.Id == id);
 
             if (currentEvent != null)
             {

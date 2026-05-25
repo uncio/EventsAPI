@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RU.Uncio.EventsAPI.Models;
+using System.Reflection.Emit;
 
 namespace RU.Uncio.EventsAPI.DataAccess.Configurations
 {

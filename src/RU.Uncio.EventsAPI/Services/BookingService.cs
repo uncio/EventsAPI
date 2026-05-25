@@ -61,12 +61,10 @@ namespace RU.Uncio.EventsAPI.Services
 
             var newBooking = new Booking(eventId);
 
-            await appDbContext.Bookings.AddAsync(newBooking);
-            var added = appDbContext.Bookings.FirstOrDefault(b => b.Id == newBooking.Id);
-
+            await appDbContext.Bookings.AddAsync(newBooking);           
             await appDbContext.SaveChangesAsync();
 
-            //var added = await repository.AddBookingAsync(newBooking, token);
+            var added = appDbContext.Bookings.FirstOrDefault(b => b.Id == newBooking.Id);
 
             return added != null ? newBooking : null;
         }

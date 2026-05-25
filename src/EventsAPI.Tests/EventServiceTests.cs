@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using RU.Uncio.EventsAPI.DataAccess;
 using RU.Uncio.EventsAPI.DTO;
 using RU.Uncio.EventsAPI.Exceptions;
 using RU.Uncio.EventsAPI.Interfaces;
@@ -11,31 +13,27 @@ namespace EventsAPI.Tests
 {
     public class EventServiceTests
     {
-        private readonly EventsService eventsService;
-        private readonly Dictionary<Guid, Event> events;
-        private readonly Mock<ILogger<EventsService>> logger;
+        private readonly IEventsService eventsService;
+        private readonly ServiceProvider serviceProvider;
+        private readonly IServiceScope serviceScope;
 
         public EventServiceTests()
         {
-            var mockRepository = new Mock<IEventRepository>();
-            logger = new Mock<ILogger<EventsService>>();
-            eventsService = new EventsService(logger.Object, mockRepository.Object);
-            events = new List<Event>
-                {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event22",new DateTime(2026, 1, 13), new DateTime(2026, 1, 16), 10),
-                }
-                .ToDictionary(ev => ev.Id, events => events);
+            var dbName = Guid.NewGuid().ToString();
+            var services = new ServiceCollection();
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseInMemoryDatabase(dbName));
+            services.AddScoped<IEventsService, EventsService>();
 
-            mockRepository.Setup(method => method.GetEvents()).Returns(events);
+            serviceProvider = services.BuildServiceProvider();
+            serviceScope = serviceProvider.CreateScope();
+            eventsService = serviceScope.ServiceProvider.GetRequiredService<IEventsService>();
         }
 
         [Fact]
         public void AddEvent_Success()
         {
             //Arrange
-            var mockRepositoryToAdd = new Mock<IEventRepository>();
             var eventsServiceToAdd = new EventsService(logger.Object, mockRepositoryToAdd.Object);
             var initialEvents = new List<Event>
                 {
