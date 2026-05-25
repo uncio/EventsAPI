@@ -13,29 +13,29 @@ namespace RU.Uncio.EventsAPI.Interfaces
         /// Gets all events from collection
         /// </summary>
         /// <returns>Collection of events</returns>
-        List<Event> GetEvents(string? title, DateTime? from, DateTime? to);
+        Task<List<Event>> GetEventsAsync(string? title, DateTime? from, DateTime? to);
         /// <summary>
         /// Gets an event from collection by ID
         /// </summary>
         /// <param name="id">ID parameter of event</param>
         /// <returns>Event instance</returns>
-        Event GetEvent(Guid id);
+        Task<Event> GetEventAsync(Guid id);
         /// <summary>
         /// Adds an event to collection
         /// </summary>
         /// <param name="ev">Event to add</param>
-        void AddEventAsync(Event ev);
+        Task AddEventAsync(Event ev);
         /// <summary>
         /// Updates an event in collection by event ID
         /// </summary>
         /// <param name="id">ID parameter of event</param>
         /// <param name="ev">Event to update</param>
-        void UpdateEvent(Guid id, Event ev);
+        Task UpdateEventAsync(Guid id, Event ev);
         /// <summary>
         /// Deletes an event from collection by event ID
         /// </summary>
         /// <param name="id"></param>
-        void RemoveEvent(Guid id);
+        Task RemoveEventAsync(Guid id);
         /// <summary>
         /// Returns paginated events
         /// </summary>
