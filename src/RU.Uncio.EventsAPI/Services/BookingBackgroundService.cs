@@ -17,8 +17,7 @@ namespace RU.Uncio.EventsAPI.Services
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="bookings"></param>
-        /// <param name="events"></param>
+        /// <param name="scFactory"></param>
         /// <param name="log"></param>
         public BookingBackgroundService(IServiceScopeFactory scFactory, ILogger<BookingBackgroundService> log)
         {

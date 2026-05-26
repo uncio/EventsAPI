@@ -4,8 +4,15 @@ using RU.Uncio.EventsAPI.Models;
 
 namespace RU.Uncio.EventsAPI.DataAccess.Configurations
 {
+    /// <summary>
+    /// DB on create configuration
+    /// </summary>
     public class BookingConfiguration : IEntityTypeConfiguration<Booking>
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="builder"></param>
         public void Configure(EntityTypeBuilder<Booking> builder)
         {
             builder.ToTable("bookings");

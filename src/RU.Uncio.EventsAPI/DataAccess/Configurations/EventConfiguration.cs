@@ -5,8 +5,15 @@ using System.Reflection.Emit;
 
 namespace RU.Uncio.EventsAPI.DataAccess.Configurations
 {
+    /// <summary>
+    /// DB on create configuration
+    /// </summary>
     public class EventConfiguration: IEntityTypeConfiguration<Event>
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="builder"></param>
         public void Configure(EntityTypeBuilder<Event> builder)
         {
             builder.ToTable("events");

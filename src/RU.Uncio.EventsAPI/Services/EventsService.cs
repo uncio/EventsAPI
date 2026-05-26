@@ -11,19 +11,14 @@ namespace RU.Uncio.EventsAPI.Services
     /// </summary>
     public class EventsService : IEventsService
     {
-        private readonly ILogger<EventsService> logger;
-        //private readonly IEventRepository repository;
         private AppDbContext appDbContext;
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="log"></param>
-        /// <param name="repo"></param>
-        public EventsService(ILogger<EventsService> log, /*IEventRepository repo,*/ AppDbContext context)
+        /// <param name="context"></param>
+        public EventsService(AppDbContext context)
         {
-            logger = log;
-            //repository = repo;
             appDbContext = context;
         }
 
@@ -94,7 +89,6 @@ namespace RU.Uncio.EventsAPI.Services
             if(result != null)
                 return result;
 
-            logger.LogError($"Events collections doesn't contain an event with id {id}");
             return null;
         }
         /// <summary>

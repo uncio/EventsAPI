@@ -8,8 +8,6 @@ namespace RU.Uncio.EventsAPI.DataAccess
     /// </summary>
     public class AppDbContext: DbContext
     {
-        private readonly ILogger<AppDbContext> logger;
-
         /// <summary>
         /// Events table
         /// </summary>
@@ -23,11 +21,9 @@ namespace RU.Uncio.EventsAPI.DataAccess
         /// 
         /// </summary>
         /// <param name="opts"></param>
-        /// <param name="log"></param>
-        public AppDbContext(DbContextOptions<AppDbContext> opts, ILogger<AppDbContext> log)
+        public AppDbContext(DbContextOptions<AppDbContext> opts)
             :base(opts)
         {
-            logger = log;
         }
 
         /// <summary>

@@ -29,11 +29,14 @@ namespace RU.Uncio.EventsAPI.Models
         /// Booking ID
         /// </summary>
         public Guid Id { get; private set; }
-        public Event Event { get; set; }
+        /// <summary>
+        /// Booking event
+        /// </summary>
+        public Event? Event { get; set; }
         /// <summary>
         /// Event ID
         /// </summary>
-        public Guid EventId { get; private set; }
+        public Guid EventId { get; set; }
 
         /// <summary>
         /// Booking Status
