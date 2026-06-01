@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using RU.Uncio.EventsAPI;
 using RU.Uncio.EventsAPI.Auxiliary;
+using RU.Uncio.EventsAPI.DataAccess;
 using RU.Uncio.EventsAPI.DTO;
 using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Middlewares;
-using RU.Uncio.EventsAPI.Repositories;
 using RU.Uncio.EventsAPI.Services;
 using System.Net;
 using System.Reflection;
@@ -20,11 +21,14 @@ builder.Services.AddControllers()
         // Эта опция отключает автоматическую проверку валидации 
         options.SuppressModelStateInvalidFilter = true;
     });
-builder.Services.AddSingleton<IEventRepository, InMemoryEventRepository>();
-builder.Services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
+//builder.Services.AddScoped<IEventRepository, InMemoryEventRepository>();
+//builder.Services.AddScoped<IBookingRepository, InMemoryBookingRepository>();
 builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddHostedService<BookingBackgroundService>();
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddSwaggerGen(options =>
@@ -47,6 +51,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
+}
 
 //app.UseAuthorization();
 

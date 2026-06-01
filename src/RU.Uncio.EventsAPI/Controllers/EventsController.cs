@@ -27,13 +27,13 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet]
-        public ActionResult<ApiResult<PaginatedResultDTO<EventDTO>>> GetEvents([FromQuery] string? title = null,
+        public async Task<ActionResult<ApiResult<PaginatedResultDTO<EventDTO>>>> GetEventsAsync([FromQuery] string? title = null,
                                                                     [FromQuery] DateTime? from = null,
                                                                     [FromQuery] DateTime? to = null,
                                                                     [FromQuery] int page = 1,
                                                                     [FromQuery] int pageSize = 10)
         {
-            var events = eventsService.GetEvents(title, from, to);                
+            var events = await eventsService.GetEventsAsync(title, from, to);                
             var paginatedEvents = eventsService.GetPaginatedEvents(events, page, pageSize, out int totalPages)
                 .Select(ev => ev.MapToDto());
 
@@ -64,9 +64,9 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiBaseResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet("{id:Guid}")]
-        public ActionResult<ApiBaseResult> GetEventById([FromRoute] Guid id)
+        public async Task<ActionResult<ApiBaseResult>> GetEventById([FromRoute] Guid id)
         {
-            var eventById = eventsService.GetEvent(id);
+            var eventById = await eventsService.GetEventAsync(id);
 
             if (eventById != null)
             {
@@ -101,7 +101,7 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status201Created)]
         [Consumes("application/json")]
         [HttpPost]
-        public ActionResult<ApiResult> CreateEvent([FromBody] EventDTO ev)
+        public async Task<ActionResult<ApiResult>> CreateEvent([FromBody] EventDTO ev)
         {
             if (!ModelState.IsValid)
             {
@@ -112,7 +112,7 @@ namespace RU.Uncio.EventsAPI.Controllers
             }
 
             var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt, ev.TotalSeats) { Description = ev.Description };
-            eventsService.AddEventAsync(newEvent);
+            await eventsService.AddEventAsync(newEvent);
 
             return CreatedAtAction(nameof(CreateEvent), new ApiResult
             {
@@ -132,7 +132,7 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
         [Consumes("application/json")]
         [HttpPut("{id:Guid}")]
-        public ActionResult UpdateEvent([FromRoute] Guid id, [FromBody] EventDTO ev)
+        public async Task<ActionResult> UpdateEvent([FromRoute] Guid id, [FromBody] EventDTO ev)
         {
             if (!ModelState.IsValid)
             {
@@ -143,7 +143,7 @@ namespace RU.Uncio.EventsAPI.Controllers
             }
 
             var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt, ev.TotalSeats) { Description = ev.Description };
-            eventsService.UpdateEvent(id, newEvent);
+            await eventsService.UpdateEventAsync(id, newEvent);
             return NoContent();
         }
 
@@ -155,9 +155,9 @@ namespace RU.Uncio.EventsAPI.Controllers
         /// and HTTP status-code 204 NoContent in case of success</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
         [HttpDelete("{id:Guid}")]
-        public ActionResult DeleteEvent([FromRoute] Guid id)
+        public async Task<ActionResult> DeleteEvent([FromRoute] Guid id)
         {
-            eventsService.RemoveEvent(id);
+            await eventsService.RemoveEventAsync(id);
             return NoContent();
         }
     }

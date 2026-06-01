@@ -30,10 +30,13 @@ namespace RU.Uncio.EventsAPI.Models
         /// </summary>
         public Guid Id { get; private set; }
         /// <summary>
+        /// Booking event
+        /// </summary>
+        public Event? Event { get; set; }
+        /// <summary>
         /// Event ID
         /// </summary>
-        [Required]
-        public Guid EventId { get; private set; }
+        public Guid EventId { get; set; }
 
         /// <summary>
         /// Booking Status
@@ -49,6 +52,11 @@ namespace RU.Uncio.EventsAPI.Models
         public DateTime? ProcessedAt { get; set; }
 
         /// <summary>
+        /// For serializer
+        /// </summary>
+        public Booking() { }
+  
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="eventId"></param>
@@ -57,7 +65,7 @@ namespace RU.Uncio.EventsAPI.Models
             Id = Guid.NewGuid();
             EventId = eventId;
             Status = BookingStatus.Pending;
-            CreatedAt = DateTime.Now;
+            CreatedAt = DateTime.Now.ToUniversalTime();
         }
         /// <summary>
         /// Confirm status setter
@@ -65,7 +73,7 @@ namespace RU.Uncio.EventsAPI.Models
         public void Confirm()
         {
             Status = BookingStatus.Confirmed;
-            ProcessedAt = DateTime.Now;
+            ProcessedAt = DateTime.Now.ToUniversalTime();
         }
 
         /// <summary>
@@ -74,7 +82,7 @@ namespace RU.Uncio.EventsAPI.Models
         public void Reject()
         {
             Status = BookingStatus.Rejected;
-            ProcessedAt = DateTime.Now;
+            ProcessedAt = DateTime.Now.ToUniversalTime();
         }
     }
 }

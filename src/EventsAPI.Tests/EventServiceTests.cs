@@ -1,6 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using RU.Uncio.EventsAPI.DataAccess;
 using RU.Uncio.EventsAPI.DTO;
 using RU.Uncio.EventsAPI.Exceptions;
 using RU.Uncio.EventsAPI.Interfaces;
@@ -11,274 +13,354 @@ namespace EventsAPI.Tests
 {
     public class EventServiceTests
     {
-        private readonly EventsService eventsService;
-        private readonly Dictionary<Guid, Event> events;
-        private readonly Mock<ILogger<EventsService>> logger;
+        private readonly IEventsService eventsService;
+        private readonly ServiceProvider serviceProvider;
+        private readonly IServiceScope serviceScope;
 
         public EventServiceTests()
         {
-            var mockRepository = new Mock<IEventRepository>();
-            logger = new Mock<ILogger<EventsService>>();
-            eventsService = new EventsService(logger.Object, mockRepository.Object);
-            events = new List<Event>
-                {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event22",new DateTime(2026, 1, 13), new DateTime(2026, 1, 16), 10),
-                }
-                .ToDictionary(ev => ev.Id, events => events);
+            var dbName = Guid.NewGuid().ToString();
+            var services = new ServiceCollection();
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseInMemoryDatabase(dbName));
+            services.AddScoped<IEventsService, EventsService>();
 
-            mockRepository.Setup(method => method.GetEvents()).Returns(events);
+            serviceProvider = services.BuildServiceProvider();
+            serviceScope = serviceProvider.CreateScope();
+            eventsService = serviceScope.ServiceProvider.GetRequiredService<IEventsService>();
         }
 
         [Fact]
-        public void AddEvent_Success()
+        public async Task AddEventAsync_Success()
         {
             //Arrange
-            var mockRepositoryToAdd = new Mock<IEventRepository>();
-            var eventsServiceToAdd = new EventsService(logger.Object, mockRepositoryToAdd.Object);
-            var initialEvents = new List<Event>
-                {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16), 10),
-                }
-                .ToDictionary(ev => ev.Id, events => events);
             Event newEvent = new("Event3", new DateTime(2026, 1, 1), new DateTime(2026, 1, 16), 10);
 
-            mockRepositoryToAdd.Setup(method => method.GetEvents()).Returns(initialEvents);
-            mockRepositoryToAdd.Setup(method => method.AddEvent(It.IsAny<Event>())).Callback<Event>((ev) => initialEvents.Add(ev.Id, ev));
+            var initialEvents = await eventsService.GetEventsAsync(null, null, null);
+            var initialAmount = initialEvents.Count;
 
             // Act
-            eventsServiceToAdd.AddEventAsync(newEvent);
-            var result = eventsServiceToAdd.GetEvents();
+            await eventsService.AddEventAsync(newEvent);
+
+            var result = await eventsService.GetEventsAsync(null, null, null);
+            var resultEvent = await eventsService.GetEventAsync(newEvent.Id);
 
             // Assert
-            Assert.Equal(4, result.Count);
-            Assert.Equal(newEvent.Title, result.Last().Title);
-            Assert.Equal(newEvent.StartAt.Date, result.Last().StartAt.Date);
-            Assert.Equal(newEvent.EndAt.Date, result.Last().EndAt.Date);
+            Assert.Equal(initialAmount + 1, result.Count);
+            Assert.Equal(newEvent.Title, resultEvent.Title);
+            Assert.Equal(newEvent.StartAt.Date, resultEvent.StartAt.Date);
+            Assert.Equal(newEvent.EndAt.Date, resultEvent.EndAt.Date);
         }
 
         [Fact]
-        public void UpdateEvent_Success()
+        public async Task UpdateEventAsync_Success()
         {
             //Arrange
-            var mockRepositoryToUpdate = new Mock<IEventRepository>();
-            var eventsServiceToUpdate = new EventsService(logger.Object, mockRepositoryToUpdate.Object);
-            var initialEvents = new List<Event>
-                {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16), 10),
-                }
-                .ToDictionary(ev => ev.Id, events => events);
-            Event updatingEvent = new("Event3", new DateTime(2026, 1, 1), new DateTime(2026, 1, 16), 10);
-            var idToUpdate = initialEvents.Keys.LastOrDefault();
+            Event newEvent = new("Event4", new DateTime(2026, 10, 10), new DateTime(2026, 10, 16), 12);
+            await eventsService.AddEventAsync(newEvent);
 
-            mockRepositoryToUpdate.Setup(method => method.GetEvents()).Returns(initialEvents);
-            mockRepositoryToUpdate.Setup(method => method.UpdateEvent(It.IsAny<Guid>(), It.IsAny<Event>())).Callback<Guid, Event>((id, ev) =>
-            {
-                initialEvents[id].Title = ev.Title;
-                initialEvents[id].Description = ev.Description;
-                initialEvents[id].StartAt = ev.StartAt;
-                initialEvents[id].EndAt = ev.EndAt;
-            });
+            Event updateEvent = new("Event4", new DateTime(2026, 10, 10), new DateTime(2026, 12, 16), 22);
 
             // Act
-            eventsServiceToUpdate.UpdateEvent(idToUpdate, updatingEvent);
-            var result = eventsServiceToUpdate.GetEvents();
+            await eventsService.UpdateEventAsync(newEvent.Id, updateEvent);
+            var result = await eventsService.GetEventAsync(newEvent.Id);
 
             // Assert
-            Assert.Equal(updatingEvent.Title, result.Last().Title);
-            Assert.Equal(updatingEvent.StartAt.Date, result.Last().StartAt.Date);
-            Assert.Equal(updatingEvent.EndAt.Date, result.Last().EndAt.Date);
+            Assert.Equal(updateEvent.Title, result.Title);
+            Assert.Equal(updateEvent.StartAt.Date, result.StartAt.Date);
+            Assert.Equal(updateEvent.EndAt.Date, result.EndAt.Date);
         }
 
         [Fact]
-        public void DeleteEvent_Success()
+        public async Task DeleteEvent_Success()
         {
             //Arrange
-            var mockRepositoryToDelete = new Mock<IEventRepository>();
-            var eventsServiceToDelete = new EventsService(logger.Object, mockRepositoryToDelete.Object);
-            var initialEvents = new List<Event>
-                {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16), 10),
-                }
-                .ToDictionary(ev => ev.Id, events => events);
+            Event newEvent = new("Event4", new DateTime(2026, 10, 10), new DateTime(2026, 10, 16), 12);
+            await eventsService.AddEventAsync(newEvent);
 
-            var idToDelete = initialEvents.Keys.LastOrDefault();
-
-            mockRepositoryToDelete.Setup(method => method.GetEvents()).Returns(initialEvents);
-            mockRepositoryToDelete.Setup(method => method.RemoveEvent(It.IsAny<Guid>())).Callback<Guid>((id) => initialEvents.Remove(id));
-
+            var initialEvents = await eventsService.GetEventsAsync(null, null, null);
+            var initialAmount = initialEvents.Count;
             // Act
-            eventsServiceToDelete.RemoveEvent(idToDelete);
-            var result = eventsServiceToDelete.GetEvents();
+
+            await eventsService.RemoveEventAsync(newEvent.Id);
+            var resultEvents = await eventsService.GetEventsAsync(null, null, null);
 
             // Assert
-            Assert.Equal(2, result.Count);
+            Assert.Equal(initialAmount - 1, resultEvents.Count);
         }
 
         [Fact]
-        public void GetAllEvents_ReturnsFullCollection()
+        public async Task GetEventById_ReturnsCorrectEvent()
         {
             //Arrange
+            Event newEvent = new("Event5", new DateTime(2026, 11, 11), new DateTime(2027, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent);
 
             // Act
-            var result = eventsService.GetEvents();
+            var result = await eventsService.GetEventAsync(newEvent.Id);
 
             // Assert
-            Assert.Equal(3, result.Count);
-            Assert.Equal("Event1", result.First().Title);
-            Assert.Equal("Event22", result.Last().Title);
+            Assert.Equal(newEvent.Id, result.Id);
+            Assert.Equal("Event5", result.Title);
         }
 
         [Fact]
-        public void GetEventById_ReturnsCorrectEvent()
+        public async Task FilterByTitle_ReturnsMatchingEvents()
         {
             //Arrange
-            var id = events.Keys.ToList()[1];
+            Event newEvent = new("Event66", new DateTime(2026, 11, 11), new DateTime(2027, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent);
+
+            var searchSubstring = "66";
+            var expectedResult = "Event66";
+
             // Act
-            var result = eventsService.GetEvent(id);
+            var result = await eventsService.GetEventsAsync(title: searchSubstring, null, null);
 
             // Assert
-            Assert.Equal(id, result.Id);
-            Assert.Equal("Event2", result.Title);
+            Assert.Contains(expectedResult, result.Select(ev => ev.Title));
         }
 
         [Fact]
-        public void FilterByTitle_ReturnsMatchingAddresses()
-        {
-            //Arrange
-            var searchSubstring = "2";
-            var expectedResult = new List<string> { "Event2", "Event22" };
-            var notExpectedResult = "Event1";
-
-            // Act
-            var result = eventsService.GetEvents(title: searchSubstring);
-
-            // Assert
-            Assert.All(result, ev => expectedResult.Contains(ev.Title));
-            Assert.DoesNotContain(notExpectedResult, result.Select(ev => ev.Title));
-        }
-
-        [Fact]
-        public void FilterByTitle_ReturnsNoEvents_WhenNoMatch()
+        public async Task FilterByTitle_ReturnsNoEvents_WhenNoMatch()
         {
             //Arrange            
-            var searchSubstring = "3";
+            var searchSubstring = "Booking";
 
             // Act
-            var result = eventsService.GetEvents(title: searchSubstring);
+            var result = await eventsService.GetEventsAsync(title: searchSubstring, null, null);
 
             //Assert
             Assert.Empty(result);
         }
 
         [Fact]
-        public void FilterByStartDate_ReturnsMatchingEvents()
+        public async Task FilterByStartDate_ReturnsMatchingEvents()
         {
-            //Arrange           
+            //Arrange
+            Event newEvent1 = new("Event44", new DateTime(2026, 1, 13), new DateTime(2027, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            Event newEvent2 = new("Event55", new DateTime(2026, 1, 13), new DateTime(2027, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent2);
+            Event newEvent3 = new("Event77", new DateTime(2026, 1, 11), new DateTime(2027, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent3);
+
+            var dateFrom = new DateTime(2026, 1, 12);
+            var expectedResult = new List<string> { "Event44", "Event55" };
+            var notExpectedResult = "Event77";
+
+            // Act
+            var result = await eventsService.GetEventsAsync(null, from: dateFrom, null);
+
+            //Assert
+            Assert.All(result, ev => expectedResult.Contains(ev.Title));
+            Assert.DoesNotContain(notExpectedResult, result.Select(ev => ev.Title));
+        }
+
+        [Fact]
+        public async Task FilterByStartDate_ReturnsNoEvents_WhenNoMatch()
+        {
+            //Arrange
+            var dateFrom = new DateTime(2027, 1, 15);
+
+            // Act
+            var result = await eventsService.GetEventsAsync(null, from: dateFrom, null);
+
+            //Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task FilterByEndDate_ReturnsMatchingEvents()
+        {
+            //Arrange
+            Event newEvent1 = new("Event144", new DateTime(2026, 1, 11), new DateTime(2027, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            Event newEvent2 = new("Event155", new DateTime(2026, 1, 12), new DateTime(2027, 10, 20), 10);
+            await eventsService.AddEventAsync(newEvent2);
+
+            var dateTo = new DateTime(2026, 10, 17);
+            var expectedResult = new List<string> { "Event155" };
+            var notExpectedResult = "Event144";
+
+            // Act
+            var result = await eventsService.GetEventsAsync(null, null, to: dateTo);
+
+            //Assert
+            Assert.All(result, ev => expectedResult.Contains(ev.Title));
+            Assert.DoesNotContain(notExpectedResult, result.Select(ev => ev.Title));
+        }
+
+        [Fact]
+        public async Task FilterByEndDate_ReturnsNoEvents_WhenNoMatch()
+        {
+            //Arrange
+            Event newEvent1 = new("Event144", new DateTime(2026, 1, 11), new DateTime(2026, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            Event newEvent2 = new("Event155", new DateTime(2026, 1, 12), new DateTime(2026, 10, 20), 10);
+            await eventsService.AddEventAsync(newEvent2);
+
+            var dateTo = new DateTime(2026, 1, 10);
+
+            // Act
+            var result = await eventsService.GetEventsAsync(null, null, to: dateTo);
+
+            //Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task FilterByStartAndEndDate_ReturnsMatchingEvents()
+        {
+            //Arrange
+            Event newEvent1 = new("Event21", new DateTime(2026, 1, 11), new DateTime(2026, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            Event newEvent2 = new("Event22", new DateTime(2026, 1, 20), new DateTime(2026, 10, 20), 10);
+            await eventsService.AddEventAsync(newEvent2);
+            Event newEvent3 = new("Event23", new DateTime(2025, 1, 20), new DateTime(2025, 10, 20), 10);
+            await eventsService.AddEventAsync(newEvent3);
+
+            var dateFrom = new DateTime(2026, 1, 25);
+            var dateTo = new DateTime(2026, 10, 1);
+            var expectedResult = new List<string> { "Event21", "Event22" };
+            var notExpectedResult = "Event23";
+
+            // Act
+            var result = await eventsService.GetEventsAsync(null, from: dateFrom, to: dateTo);
+
+            //Assert
+            Assert.All(result, ev => expectedResult.Contains(ev.Title));
+            Assert.DoesNotContain(notExpectedResult, result.Select(ev => ev.Title));
+        }
+
+        [Fact]
+        public async Task FilterByStartAndEndDate_ReturnsNoEvents_WhenNoMatch()
+        {
+            //Arrange
+            Event newEvent1 = new("Event21", new DateTime(2026, 1, 11), new DateTime(2026, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            Event newEvent2 = new("Event22", new DateTime(2026, 1, 20), new DateTime(2026, 10, 20), 10);
+            await eventsService.AddEventAsync(newEvent2);
+            Event newEvent3 = new("Event23", new DateTime(2025, 1, 20), new DateTime(2025, 10, 20), 10);
+            await eventsService.AddEventAsync(newEvent3);
+
+            var dateFrom = new DateTime(2024, 1, 13);
+            var dateTo = new DateTime(2024, 1, 14);
+
+            // Act
+            var result = await eventsService.GetEventsAsync(null, from: dateFrom, to: dateTo);
+
+            //Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task FilterByTitleAndStartAndEndDate_ReturnsMatchingEvents()
+        {
+            //Arrange
+            Event newEvent1 = new("Event21", new DateTime(2026, 1, 20), new DateTime(2026, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            Event newEvent2 = new("Event22", new DateTime(2025, 1, 11), new DateTime(2026, 10, 20), 10);
+            await eventsService.AddEventAsync(newEvent2);
+            Event newEvent3 = new("Booking1", new DateTime(2025, 1, 20), new DateTime(2025, 10, 10), 10);
+            await eventsService.AddEventAsync(newEvent3);
+
             var dateFrom = new DateTime(2026, 1, 14);
-            var expectedResult = new List<string> { "Event1", "Event2" };
-            var notExpectedResult = "Event22";
+            var dateTo = new DateTime(2026, 10, 17);
+            var searchSubstring = "Event";
+            var notExpectedResult = new List<string> { "Booking1" };
+            var expectedResult = "Event21";
 
             // Act
-            var result = eventsService.GetEvents(from: dateFrom);
-
+            var result = await eventsService.GetEventsAsync(title: searchSubstring, /*from: dateFrom,*/ null, to: dateTo);
             //Assert
-            Assert.All(result, ev => expectedResult.Contains(ev.Title));
-            Assert.DoesNotContain(notExpectedResult, result.Select(ev => ev.Title));
+            Assert.Contains(expectedResult, result.Select(ev => ev.Title));
+            Assert.DoesNotContain(result, ev => notExpectedResult.Contains(ev.Title));
         }
 
         [Fact]
-        public void FilterByStartDate_ReturnsNoEvents_WhenNoMatch()
+        public async Task FilterByTitleAndStartAndEndDate_ReturnsNoEvents_WhenNoMatch()
         {
             //Arrange
-            var dateFrom = new DateTime(2026, 1, 15);
+            Event newEvent1 = new("Event21", new DateTime(2026, 1, 20), new DateTime(2026, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            Event newEvent2 = new("Event22", new DateTime(2025, 1, 11), new DateTime(2026, 10, 20), 10);
+            await eventsService.AddEventAsync(newEvent2);
+            Event newEvent3 = new("Booking1", new DateTime(2025, 1, 20), new DateTime(2025, 10, 10), 10);
+            await eventsService.AddEventAsync(newEvent3);
+
+            var dateFrom = new DateTime(2026, 2, 14);
+            var dateTo = new DateTime(2026, 9, 16);
+            var searchSubstring = "Event";
 
             // Act
-            var result = eventsService.GetEvents(from: dateFrom);
+            var result = await eventsService.GetEventsAsync(title: searchSubstring, from: dateFrom, to: dateTo);
 
             //Assert
             Assert.Empty(result);
         }
 
         [Fact]
-        public void FilterByEndDate_ReturnsMatchingEvents()
-        {
-            //Arrange           
-            var dateTo = new DateTime(2026, 1, 15);
-            var expectedResult = new List<string> { "Event1", "Event2" };
-            var notExpectedResult = "Event22";
-
-            // Act
-            var result = eventsService.GetEvents(to: dateTo);
-
-            //Assert
-            Assert.All(result, ev => expectedResult.Contains(ev.Title));
-            Assert.DoesNotContain(notExpectedResult, result.Select(ev => ev.Title));
-        }
-
-        [Fact]
-        public void FilterByEndDate_ReturnsNoEvents_WhenNoMatch()
+        public async Task FilterByTitleAndStartDate_ReturnsMatchingEvents()
         {
             //Arrange
-            var dateTo = new DateTime(2026, 1, 14);
+            Event newEvent1 = new("Event21", new DateTime(2026, 1, 20), new DateTime(2026, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            Event newEvent2 = new("Event22", new DateTime(2025, 1, 11), new DateTime(2026, 10, 20), 10);
+            await eventsService.AddEventAsync(newEvent2);
+            Event newEvent3 = new("Booking1", new DateTime(2025, 1, 20), new DateTime(2025, 10, 10), 10);
+            await eventsService.AddEventAsync(newEvent3);
 
-            // Act
-            var result = eventsService.GetEvents(to: dateTo);
-
-            //Assert
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public void FilterByStartAndEndDate_ReturnsMatchingEvents()
-        {
-            //Arrange           
-            var dateFrom = new DateTime(2026, 1, 14);
-            var dateTo = new DateTime(2026, 1, 16);
-            var expectedResult = new List<string> { "Event1", "Event2" };
-            var notExpectedResult = "Event22";
-
-            // Act
-            var result = eventsService.GetEvents(from: dateFrom, to: dateTo);
-
-            //Assert
-            Assert.All(result, ev => expectedResult.Contains(ev.Title));
-            Assert.DoesNotContain(notExpectedResult, result.Select(ev => ev.Title));
-        }
-
-        [Fact]
-        public void FilterByStartAndEndDate_ReturnsNoEvents_WhenNoMatch()
-        {
-            //Arrange
             var dateFrom = new DateTime(2026, 1, 13);
-            var dateTo = new DateTime(2026, 1, 14);
+            var searchSubstring = "Event";
+            var notExpectedResult = new List<string> { "Booking1" };
+            var expectedResult = "Event21";
 
             // Act
-            var result = eventsService.GetEvents(from: dateFrom, to: dateTo);
+            var result = await eventsService.GetEventsAsync(title: searchSubstring, from: dateFrom, null);
 
             //Assert
-            Assert.Empty(result);
+            Assert.Contains(expectedResult, result.Select(ev => ev.Title));
+            Assert.DoesNotContain(result, ev => notExpectedResult.Contains(ev.Title));
         }
 
         [Fact]
-        public void FilterByTitleAndStartAndEndDate_ReturnsMatchingEvents()
+        public async Task FilterByTitleAndStartDate_ReturnsNoEvents_WhenNoMatch()
         {
-            //Arrange           
-            var dateFrom = new DateTime(2026, 1, 14);
-            var dateTo = new DateTime(2026, 1, 16);
+            //Arrange
+            Event newEvent1 = new("Event21", new DateTime(2026, 1, 20), new DateTime(2026, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            Event newEvent3 = new("Booking1", new DateTime(2025, 1, 20), new DateTime(2025, 10, 10), 10);
+            await eventsService.AddEventAsync(newEvent3);
+
+            var dateFrom = new DateTime(2026, 11, 14);
             var searchSubstring = "2";
-            var notExpectedResult = new List<string> { "Event1", "Event22" };
-            var expectedResult = "Event2";
 
             // Act
-            var result = eventsService.GetEvents(title: searchSubstring, from: dateFrom, to: dateTo);
+            var result = await eventsService.GetEventsAsync(title: searchSubstring, from: dateFrom, null);
+
+            //Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task FilterByTitleAndEndDate_ReturnsMatchingEvents()
+        {
+            //Arrange
+            Event newEvent1 = new("Event21", new DateTime(2026, 1, 20), new DateTime(2026, 1, 26), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            Event newEvent2 = new("Event22", new DateTime(2025, 1, 11), new DateTime(2026, 10, 10), 10);
+            await eventsService.AddEventAsync(newEvent2);
+            Event newEvent3 = new("Booking1", new DateTime(2025, 1, 20), new DateTime(2025, 10, 10), 10);
+            await eventsService.AddEventAsync(newEvent3);
+
+            var dateTo = new DateTime(2026, 1, 29);
+            var searchSubstring = "Event";
+            var notExpectedResult = new List<string> { "Event22", "Booking1" };
+            var expectedResult = "Event21";
+
+            // Act
+            var result = await eventsService.GetEventsAsync(title: searchSubstring, null, to: dateTo);
 
             //Assert
             Assert.Contains(expectedResult, result.Select(ev => ev.Title));
@@ -286,95 +368,50 @@ namespace EventsAPI.Tests
         }
 
         [Fact]
-        public void FilterByTitleAndStartAndEndDate_ReturnsNoEvents_WhenNoMatch()
+        public async Task FilterByTitleAndEndDate_ReturnsNoEvents_WhenNoMatch()
         {
             //Arrange
-            var dateFrom = new DateTime(2026, 1, 14);
-            var dateTo = new DateTime(2026, 1, 16);
-            var searchSubstring = "3";
+            Event newEvent1 = new("Event21", new DateTime(2026, 1, 20), new DateTime(2026, 10, 16), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            Event newEvent3 = new("Booking1", new DateTime(2025, 1, 20), new DateTime(2025, 10, 10), 10);
+            await eventsService.AddEventAsync(newEvent3);
+
+            var dateTo = new DateTime(2025, 1, 16);
+            var searchSubstring = "2";
 
             // Act
-            var result = eventsService.GetEvents(title: searchSubstring, from: dateFrom, to: dateTo);
+            var result = await eventsService.GetEventsAsync(title: searchSubstring, null, to: dateTo);
 
             //Assert
             Assert.Empty(result);
         }
 
         [Fact]
-        public void FilterByTitleAndStartDate_ReturnsMatchingEvents()
-        {
-            //Arrange           
-            var dateFrom = new DateTime(2026, 1, 13);
-            var searchSubstring = "1";
-            var notExpectedResult = new List<string> { "Event2", "Event22" };
-            var expectedResult = "Event1";
-
-            // Act
-            var result = eventsService.GetEvents(title: searchSubstring, from: dateFrom);
-
-            //Assert
-            Assert.Contains(expectedResult, result.Select(ev => ev.Title));
-            Assert.DoesNotContain(result, ev => notExpectedResult.Contains(ev.Title));
-        }
-
-        [Fact]
-        public void FilterByTitleAndStartDate_ReturnsNoEvents_WhenNoMatch()
+        public async Task GetPaginatedEvents_ReturnsPaginatedEvents()
         {
             //Arrange
-            var dateFrom = new DateTime(2026, 1, 14);
-            var searchSubstring = "3";
+            Event newEvent1 = new("Event1", new DateTime(2026, 1, 20), new DateTime(2026, 1, 26), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            Event newEvent2 = new("Event2", new DateTime(2025, 1, 11), new DateTime(2026, 10, 10), 10);
+            await eventsService.AddEventAsync(newEvent2);
+            Event newEvent3 = new("Event3", new DateTime(2025, 1, 20), new DateTime(2025, 10, 10), 10);
+            await eventsService.AddEventAsync(newEvent3);
+            //Event newEvent4 = new("Event4", new DateTime(2025, 1, 20), new DateTime(2025, 10, 10), 10);
+            //await eventsService.AddEventAsync(newEvent4);
+            //Event newEvent5 = new("Event5", new DateTime(2025, 1, 20), new DateTime(2025, 10, 10), 10);
+            //await eventsService.AddEventAsync(newEvent5);
+            //Event newEvent6 = new("Event6", new DateTime(2025, 1, 20), new DateTime(2025, 10, 10), 10);
+            //await eventsService.AddEventAsync(newEvent6);
 
-            // Act
-            var result = eventsService.GetEvents(title: searchSubstring, from: dateFrom);
-
-            //Assert
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public void FilterByTitleAndEndDate_ReturnsMatchingEvents()
-        {
-            //Arrange           
-            var dateTo = new DateTime(2026, 1, 15);
-            var searchSubstring = "1";
-            var notExpectedResult = new List<string> { "Event2", "Event22" };
-            var expectedResult = "Event1";
-
-            // Act
-            var result = eventsService.GetEvents(title: searchSubstring, to: dateTo);
-
-            //Assert
-            Assert.Contains(expectedResult, result.Select(ev => ev.Title));
-            Assert.DoesNotContain(result, ev => notExpectedResult.Contains(ev.Title));
-        }
-
-        [Fact]
-        public void FilterByTitleAndEndDate_ReturnsNoEvents_WhenNoMatch()
-        {
-            //Arrange
-            var dateTo = new DateTime(2026, 1, 16);
-            var searchSubstring = "3";
-
-            // Act
-            var result = eventsService.GetEvents(title: searchSubstring, to: dateTo);
-
-            //Assert
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public void GetPaginatedEvents_ReturnsPaginatedEvents()
-        {
-            //Arrange           
             var page = 2;
             var pageSize = 2;
 
             var expectingItemsCount = 1;
             var notExpectedResult = new List<string> { "Event1", "Event2" };
-            var expectedResult = "Event22";
+            var expectedResult = "Event3";
 
             // Act
-            var currentEvents = eventsService.GetEvents();
+            var currentEvents = await eventsService.GetEventsAsync(null, null, null);
             var result = eventsService.GetPaginatedEvents(currentEvents, page: page, pageSize: pageSize, out int totalPages);
 
             //Assert
@@ -384,18 +421,27 @@ namespace EventsAPI.Tests
         }
 
         [Fact]
-        public void GetFilteredByTitlePaginatedEvents_ReturnsCorrectPagination()
+        public async Task GetFilteredByTitlePaginatedEvents_ReturnsCorrectPagination()
         {
-            //Arrange           
+            //Arrange
+            Event newEvent1 = new("Event1", new DateTime(2026, 1, 20), new DateTime(2026, 1, 26), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            Event newEvent2 = new("Event23", new DateTime(2025, 1, 11), new DateTime(2026, 10, 10), 10);
+            await eventsService.AddEventAsync(newEvent2);
+            Event newEvent3 = new("Event3", new DateTime(2025, 1, 20), new DateTime(2025, 10, 10), 10);
+            await eventsService.AddEventAsync(newEvent3);
+            Event newEvent4 = new("Event4", new DateTime(2025, 1, 20), new DateTime(2025, 10, 10), 10);
+            await eventsService.AddEventAsync(newEvent4);
+
             var page = 1;
             var pageSize = 2;
-            var searchSubstring = "2";
+            var searchSubstring = "3";
 
             var expectingItemsCount = 2;
             var expectingTotalPages = 1;
 
             // Act
-            var currentEvents = eventsService.GetEvents(title: searchSubstring);
+            var currentEvents = await eventsService.GetEventsAsync(title: searchSubstring, null, null);
             var result = eventsService.GetPaginatedEvents(currentEvents, page: page, pageSize: pageSize, out int totalPages);
 
             //Assert
@@ -405,41 +451,36 @@ namespace EventsAPI.Tests
 
 
         [Fact]
-        public void GetEventById_WhenIdDoesntExist_ReturnsNull()
+        public async Task GetEventById_WhenIdDoesntExist_ReturnsNull()
         {
             //Arrange
+            Event newEvent1 = new("Event1", new DateTime(2026, 1, 20), new DateTime(2026, 1, 26), 10);
+            await eventsService.AddEventAsync(newEvent1);
+
             var id = Guid.NewGuid();
             // Act
-            var result = eventsService.GetEvent(id);
+            var result = await eventsService.GetEventAsync(id);
 
             // Assert
             Assert.Null(result);
         }
 
         [Fact]
-        public void UpdateEventById_WhenIdDoesntExist_ThrowsMissingEventException()
+        public async Task UpdateEventById_WhenIdDoesntExist_ThrowsMissingEventException()
         {
             //Arrange
-            var expectedExceptionMessage = $"Events collections doesn't contain an event with id";
-            var mockRepositoryToUpdate = new Mock<IEventRepository>();
-            var eventsServiceToUpdate = new EventsService(logger.Object, mockRepositoryToUpdate.Object);
-            var initialEvents = new List<Event>
-                {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16), 10),
-                }
-                .ToDictionary(ev => ev.Id, events => events);
-            Event updatingEvent = new("Event3", new DateTime(2026, 1, 1), new DateTime(2026, 1, 16), 10);
-            var idToUpdate = Guid.NewGuid();
+            Event newEvent1 = new("Event1", new DateTime(2026, 1, 20), new DateTime(2026, 1, 26), 10);
+            await eventsService.AddEventAsync(newEvent1);
 
-            mockRepositoryToUpdate.Setup(method => method.GetEvents()).Returns(initialEvents);
-            mockRepositoryToUpdate.Setup(method => method.UpdateEvent(It.IsAny<Guid>(), It.IsAny<Event>()))
-                .Throws(new Exception(expectedExceptionMessage));
+            Event updatingEvent = new("Event1", new DateTime(2026, 1, 23), new DateTime(2026, 1, 26), 10);
+
+            var id = Guid.NewGuid();
+
+            var expectedExceptionMessage = $"Events collections doesn't contain an event with id";
 
             // Act
-            var exception = Assert
-                .Throws<MissingEventException>(() => eventsServiceToUpdate.UpdateEvent(idToUpdate, updatingEvent));
+            var exception = await Assert
+                .ThrowsAsync<MissingEventException>(() => eventsService.UpdateEventAsync(id, updatingEvent));
 
             // Assert
             Assert.IsType<MissingEventException>(exception);
@@ -447,28 +488,16 @@ namespace EventsAPI.Tests
         }
 
         [Fact]
-        public void AddEvent_WhenIdAlreadyExists_ThrowsEventExistsException()
+        public async Task AddEvent_WhenIdAlreadyExists_ThrowsEventExistsException()
         {
-            //Arrange            
-            var mockRepositoryToUpdate = new Mock<IEventRepository>();
-            var eventsServiceToUpdate = new EventsService(logger.Object, mockRepositoryToUpdate.Object);
-            var initialEvents = new List<Event>
-                {
-                    new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event2",new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
-                    new("Event22",new DateTime(2026, 1, 15), new DateTime(2026, 1, 16), 10),
-                }
-                .ToDictionary(ev => ev.Id, events => events);
-            Event addingEvent = initialEvents.FirstOrDefault().Value;
-            var expectedExceptionMessage = $"Event with ID {addingEvent.Id} already exists in the collection";
-
-            mockRepositoryToUpdate.Setup(method => method.GetEvents()).Returns(initialEvents);
-            mockRepositoryToUpdate.Setup(method => method.AddEvent(It.IsAny<Event>()))
-                .Throws(new Exception(expectedExceptionMessage));
+            //Arrange
+            Event newEvent1 = new("Event1", new DateTime(2026, 1, 20), new DateTime(2026, 1, 26), 10);
+            await eventsService.AddEventAsync(newEvent1);
+            var expectedExceptionMessage = $"Event with ID {newEvent1.Id} already exists in the collection";
 
             // Act
-            var exception = Assert
-                .Throws<EventExistsException>(() => eventsServiceToUpdate.AddEventAsync(addingEvent));
+            var exception = await Assert
+                .ThrowsAsync<EventExistsException>(() => eventsService.AddEventAsync(newEvent1));
 
             // Assert
             Assert.IsType<EventExistsException>(exception);

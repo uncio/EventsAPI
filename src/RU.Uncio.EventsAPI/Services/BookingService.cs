@@ -1,4 +1,6 @@
-﻿using RU.Uncio.EventsAPI.Exceptions;
+﻿using Microsoft.EntityFrameworkCore;
+using RU.Uncio.EventsAPI.DataAccess;
+using RU.Uncio.EventsAPI.Exceptions;
 using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Models;
 using System.Net;
@@ -10,23 +12,17 @@ namespace RU.Uncio.EventsAPI.Services
     /// </summary>
     public class BookingService : IBookingService
     {
-        private readonly ILogger<BookingService> logger;
-        private readonly IEventsService eventService;
-        private readonly IBookingRepository repository;
+        private readonly AppDbContext appDbContext;
 
-        private readonly object bookingLock = new();
+        private static readonly SemaphoreSlim bookingSemaphore = new(1, 1);
 
         /// <summary>
         /// constructor
         /// </summary>
-        /// <param name="log"></param>
-        /// <param name="bookingRepo"></param>
-        /// <param name="evService"></param>
-        public BookingService(ILogger<BookingService> log, IBookingRepository bookingRepo, IEventsService evService)
+        /// <param name="context"></param>
+        public BookingService(AppDbContext context)
         {
-            logger = log;
-            repository = bookingRepo;
-            eventService = evService;
+            appDbContext = context;
         }
 
         /// <summary>
@@ -37,28 +33,36 @@ namespace RU.Uncio.EventsAPI.Services
         /// <returns></returns>
         public async Task<Booking> CreateBookingAsync(Guid eventId, CancellationToken token)
         {
-            var ev = eventService.GetEvent(eventId);
-            if (ev == null)
+            await bookingSemaphore.WaitAsync(token);
+            Booking? newBooking = null;
+            try
             {
-                logger.LogError($"Event with ID {eventId} is not found in the collection");
-                throw new MissingEventException($"Event with ID {eventId} is not found in the collection");
-            }
+                var ev = await appDbContext.Events.FirstOrDefaultAsync(ev => ev.Id == eventId);
+                if (ev == null)
+                {
+                    throw new MissingEventException($"Event with ID {eventId} is not found in the collection");
+                }
 
-            var bookingResult = false;
-            lock (bookingLock)
+                var bookingResult = ev.TryReserveSeats();
+
+                if (!bookingResult)
+                {
+                    throw new NoAvailableSeatsException("No available seats for this event");
+                }
+
+                newBooking = new Booking(eventId);
+
+                await appDbContext.Bookings.AddAsync(newBooking);
+                await appDbContext.SaveChangesAsync();
+            }
+            finally
             {
-                bookingResult = ev.TryReserveSeats();
-            }
+                bookingSemaphore.Release();
+            }            
 
-            if (!bookingResult)
-            {
-                throw new NoAvailableSeatsException("No available seats for this event");
-            }
+            var added = appDbContext.Bookings.FirstOrDefault(b => b.Id == newBooking.Id);
 
-            var newBooking = new Booking(eventId);
-            var added = await repository.AddBookingAsync(newBooking, token);
-
-            return added ? newBooking : null;
+            return added != null ? newBooking : null;
         }
 
         /// <summary>
@@ -69,12 +73,12 @@ namespace RU.Uncio.EventsAPI.Services
         /// <returns></returns>
         public async Task<Booking> GetBookingByIdAsync(Guid bookingId, CancellationToken token)
         {
-            var bookings = await repository.GetBookingsAsync(token);
+            var bookings = appDbContext.Bookings
+                .ToDictionary(b => b.Id);
 
             if (bookings.TryGetValue(bookingId, out var booking))
                 return booking;
 
-            logger.LogError($"Booking queue doesn't contain a booking with id {bookingId}");
             return null;
         }        
     }

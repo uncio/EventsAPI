@@ -15,6 +15,8 @@ namespace RU.Uncio.EventsAPI.DTO
         /// <summary>
         /// Event ID
         /// </summary>
+        ///         
+        [Required]
         public Guid EventId { get; set; }
         /// <summary>
         /// Booking Status

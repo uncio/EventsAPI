@@ -1,4 +1,5 @@
-﻿using RU.Uncio.EventsAPI.DTO;
+﻿using RU.Uncio.EventsAPI.DataAccess;
+using RU.Uncio.EventsAPI.DTO;
 using RU.Uncio.EventsAPI.Exceptions;
 using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Models;
@@ -10,18 +11,15 @@ namespace RU.Uncio.EventsAPI.Services
     /// </summary>
     public class EventsService : IEventsService
     {
-        private readonly ILogger<EventsService> logger;
-        private readonly IEventRepository repository;
+        private AppDbContext appDbContext;
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="log"></param>
-        /// <param name="repo"></param>
-        public EventsService(ILogger<EventsService> log, IEventRepository repo)
+        /// <param name="context"></param>
+        public EventsService(AppDbContext context)
         {
-            logger = log;
-            repository = repo;
+            appDbContext = context;
         }
 
         /// <summary>
@@ -31,9 +29,9 @@ namespace RU.Uncio.EventsAPI.Services
         /// <param name="from">Event starts from filter</param>
         /// <param name="to">Event ends up to filter</param>
         /// <returns>Collection of filtered events</returns>
-        public List<Event> GetEvents(string? title = null, DateTime? from = null, DateTime? to = null)
+        public async Task<List<Event>> GetEventsAsync(string? title = null, DateTime? from = null, DateTime? to = null)
         {
-            IEnumerable<Event> result = repository.GetEvents().Values.ToList();
+            IEnumerable<Event> result = appDbContext.Events;//repository.GetEvents().Values.ToList();
 
             if (!String.IsNullOrEmpty(title))
             {
@@ -81,12 +79,16 @@ namespace RU.Uncio.EventsAPI.Services
         /// </summary>
         /// <param name="id">ID parameter of event</param>
         /// <returns></returns>
-        public Event GetEvent(Guid id)
+        public async Task<Event> GetEventAsync(Guid id)
         {
-            if(repository.GetEvents().TryGetValue(id, out var ev))
-                return ev;
+            //if(repository.GetEvents().TryGetValue(id, out var ev))
+            //    return ev;
 
-            logger.LogError($"Events collections doesn't contain an event with id {id}");
+            var result = appDbContext.Events.FirstOrDefault(ev => ev.Id == id);
+
+            if(result != null)
+                return result;
+
             return null;
         }
         /// <summary>
@@ -94,10 +96,17 @@ namespace RU.Uncio.EventsAPI.Services
         /// </summary>
         /// <param name="ev">Event to add</param>
         /// <exception cref="ArgumentException"></exception>
-        public void AddEventAsync(Event ev)
+        public async Task AddEventAsync(Event ev)
         {
-            if(!repository.GetEvents().ContainsKey(ev.Id))
-                repository.AddEvent(ev);
+            var existingEvent = appDbContext.Events.FirstOrDefault(e => e.Id == ev.Id);
+
+            //if (!repository.GetEvents().ContainsKey(ev.Id))
+            //    repository.AddEvent(ev);
+            if (existingEvent == null)
+            {
+                await appDbContext.AddAsync(ev);
+                await appDbContext.SaveChangesAsync();
+            }
             else
             {
                 throw new EventExistsException($"Event with ID {ev.Id} already exists in the collection");
@@ -110,9 +119,11 @@ namespace RU.Uncio.EventsAPI.Services
         /// <param name="id">ID parameter of event</param>
         /// <param name="ev">Event to update</param>
         /// <exception cref="IndexOutOfRangeException"></exception>
-        public void UpdateEvent(Guid id, Event ev)
+        public async Task UpdateEventAsync(Guid id, Event ev)
         {
-            if (repository.GetEvents().TryGetValue(id, out var currentEvent))
+            var currentEvent = appDbContext.Events.FirstOrDefault(ev => ev.Id == id);
+
+            if (currentEvent != null)
             {
                 if(currentEvent.TotalSeats - currentEvent.AvailableSeats > ev.TotalSeats)
                 {
@@ -120,9 +131,22 @@ namespace RU.Uncio.EventsAPI.Services
                 }
                 else
                 {
-                    repository.UpdateEvent(id, ev);
+                    currentEvent.UpdateWith(ev);
+                    appDbContext.Update(currentEvent);
+                    await appDbContext.SaveChangesAsync();
                 }                
             }
+            //if (repository.GetEvents().TryGetValue(id, out var currentEvent))
+            //{
+            //    if(currentEvent.TotalSeats - currentEvent.AvailableSeats > ev.TotalSeats)
+            //    {
+            //        throw new TotalGreaterBookedException($"Not possible to change total seats. Amount of bookings for the event is greater than new total seats value");
+            //    }
+            //    else
+            //    {
+            //        repository.UpdateEvent(id, ev);
+            //    }                
+            //}
             else
             {
                 throw new MissingEventException($"Events collections doesn't contain an event with id {id}");
@@ -134,12 +158,19 @@ namespace RU.Uncio.EventsAPI.Services
         /// </summary>
         /// <param name="id">ID parameter of event</param>
         /// <exception cref="IndexOutOfRangeException"></exception>
-        public void RemoveEvent(Guid id)
+        public async Task RemoveEventAsync(Guid id)
         {
-            if (repository.GetEvents().TryGetValue(id, out _))
+            var currentEvent = appDbContext.Events.FirstOrDefault(ev => ev.Id == id);
+
+            if (currentEvent != null)
             {
-                repository.RemoveEvent(id);
+                appDbContext.Remove(currentEvent);
+                await appDbContext.SaveChangesAsync();
             }
+            //if (repository.GetEvents().TryGetValue(id, out _))
+            //{
+            //    repository.RemoveEvent(id);
+            //}
             else
             {
                 throw new MissingEventException($"Events collections doesn't contain an event with id {id}");

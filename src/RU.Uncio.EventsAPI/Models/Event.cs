@@ -12,7 +12,7 @@
         /// <summary>
         /// Event title
         /// </summary>
-        public string Title { get; set; }
+        public string Title { get; set; } = null!;
         /// <summary>
         /// Event description (optional)
         /// </summary>
@@ -34,6 +34,15 @@
         /// Available amount of seats at current moment
         /// </summary>
         public int AvailableSeats { get; set; }
+        /// <summary>
+        /// Bookings for the event
+        /// </summary>
+        public List<Booking> Bookings { get; set; } = new();
+
+        /// <summary>
+        /// For deserialzer
+        /// </summary>
+        public Event() { }
 
         /// <summary>
         /// Event base constructor
@@ -58,6 +67,8 @@
             Description = ev.Description;
             StartAt = ev.StartAt;
             EndAt = ev.EndAt;
+            TotalSeats = ev.TotalSeats;
+            AvailableSeats = TotalSeats - Bookings.Count;
         }
 
         internal bool TryReserveSeats(int count = 1)

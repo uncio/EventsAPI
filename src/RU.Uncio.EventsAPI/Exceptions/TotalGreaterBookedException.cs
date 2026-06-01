@@ -36,7 +36,12 @@ namespace RU.Uncio.EventsAPI.Exceptions
         public TotalGreaterBookedException(string? message, string? paramName) : base(message, paramName)
         {
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="paramName"></param>
+        /// <param name="innerException"></param>
         public TotalGreaterBookedException(string? message, string? paramName, Exception? innerException) : base(message, paramName, innerException)
         {
         }
