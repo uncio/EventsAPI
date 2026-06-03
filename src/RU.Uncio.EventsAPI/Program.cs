@@ -7,6 +7,7 @@ using RU.Uncio.EventsAPI.DataAccess;
 using RU.Uncio.EventsAPI.DTO;
 using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Middlewares;
+using RU.Uncio.EventsAPI.Repositories;
 using RU.Uncio.EventsAPI.Services;
 using System.Net;
 using System.Reflection;
@@ -21,8 +22,8 @@ builder.Services.AddControllers()
         // Эта опция отключает автоматическую проверку валидации 
         options.SuppressModelStateInvalidFilter = true;
     });
-//builder.Services.AddScoped<IEventRepository, InMemoryEventRepository>();
-//builder.Services.AddScoped<IBookingRepository, InMemoryBookingRepository>();
+builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddHostedService<BookingBackgroundService>();
@@ -55,7 +56,7 @@ app.UseHttpsRedirection();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
 }
 
 //app.UseAuthorization();
