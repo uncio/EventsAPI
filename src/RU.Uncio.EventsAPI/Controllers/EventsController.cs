@@ -27,13 +27,14 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet]
-        public async Task<ActionResult<ApiResult<PaginatedResultDTO<EventDTO>>>> GetEventsAsync([FromQuery] string? title = null,
+        public async Task<ActionResult<ApiResult<PaginatedResultDTO<EventDTO>>>> GetEventsAsync(CancellationToken token,
+                                                                    [FromQuery] string? title = null,
                                                                     [FromQuery] DateTime? from = null,
                                                                     [FromQuery] DateTime? to = null,
                                                                     [FromQuery] int page = 1,
                                                                     [FromQuery] int pageSize = 10)
         {
-            var events = await eventsService.GetEventsAsync(title, from, to);                
+            var events = await eventsService.GetEventsAsync(token, title, from, to);                
             var paginatedEvents = eventsService.GetPaginatedEvents(events, page, pageSize, out int totalPages)
                 .Select(ev => ev.MapToDto());
 
@@ -64,9 +65,9 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiBaseResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet("{id:Guid}")]
-        public async Task<ActionResult<ApiBaseResult>> GetEventById([FromRoute] Guid id)
+        public async Task<ActionResult<ApiBaseResult>> GetEventById([FromRoute] Guid id, CancellationToken token)
         {
-            var eventById = await eventsService.GetEventAsync(id);
+            var eventById = await eventsService.GetEventAsync(id, token);
 
             if (eventById != null)
             {
@@ -101,7 +102,7 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status201Created)]
         [Consumes("application/json")]
         [HttpPost]
-        public async Task<ActionResult<ApiResult>> CreateEvent([FromBody] EventDTO ev)
+        public async Task<ActionResult<ApiResult>> CreateEvent([FromBody] EventDTO ev, CancellationToken token)
         {
             if (!ModelState.IsValid)
             {
@@ -112,7 +113,7 @@ namespace RU.Uncio.EventsAPI.Controllers
             }
 
             var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt, ev.TotalSeats) { Description = ev.Description };
-            await eventsService.AddEventAsync(newEvent);
+            await eventsService.AddEventAsync(newEvent, token);
 
             return CreatedAtAction(nameof(CreateEvent), new ApiResult
             {
@@ -132,7 +133,7 @@ namespace RU.Uncio.EventsAPI.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
         [Consumes("application/json")]
         [HttpPut("{id:Guid}")]
-        public async Task<ActionResult> UpdateEvent([FromRoute] Guid id, [FromBody] EventDTO ev)
+        public async Task<ActionResult> UpdateEvent([FromRoute] Guid id, [FromBody] EventDTO ev, CancellationToken token)
         {
             if (!ModelState.IsValid)
             {
@@ -143,7 +144,7 @@ namespace RU.Uncio.EventsAPI.Controllers
             }
 
             var newEvent = new Event(ev.Title ?? "", ev.StartAt, ev.EndAt, ev.TotalSeats) { Description = ev.Description };
-            await eventsService.UpdateEventAsync(id, newEvent);
+            await eventsService.UpdateEventAsync(id, newEvent, token);
             return NoContent();
         }
 
@@ -155,9 +156,9 @@ namespace RU.Uncio.EventsAPI.Controllers
         /// and HTTP status-code 204 NoContent in case of success</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
         [HttpDelete("{id:Guid}")]
-        public async Task<ActionResult> DeleteEvent([FromRoute] Guid id)
+        public async Task<ActionResult> DeleteEvent([FromRoute] Guid id, CancellationToken token)
         {
-            await eventsService.RemoveEventAsync(id);
+            await eventsService.RemoveEventAsync(id, token);
             return NoContent();
         }
     }

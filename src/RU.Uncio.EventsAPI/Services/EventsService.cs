@@ -11,15 +11,17 @@ namespace RU.Uncio.EventsAPI.Services
     /// </summary>
     public class EventsService : IEventsService
     {
-        private AppDbContext appDbContext;
+        private readonly ILogger<EventsService> logger;
+        private readonly IEventRepository repository;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="context"></param>
-        public EventsService(AppDbContext context)
+        public EventsService(ILogger<EventsService> log, IEventRepository repo)
         {
-            appDbContext = context;
+            logger = log;
+            repository = repo;
         }
 
         /// <summary>
@@ -29,30 +31,31 @@ namespace RU.Uncio.EventsAPI.Services
         /// <param name="from">Event starts from filter</param>
         /// <param name="to">Event ends up to filter</param>
         /// <returns>Collection of filtered events</returns>
-        public async Task<List<Event>> GetEventsAsync(string? title = null, DateTime? from = null, DateTime? to = null)
+        public async Task<List<Event>> GetEventsAsync(CancellationToken token, string? title = null, DateTime? from = null, DateTime? to = null)
         {
-            IEnumerable<Event> result = appDbContext.Events;//repository.GetEvents().Values.ToList();
+            var result = await repository.GetEventsAsync(token);
+            IEnumerable<Event> events = result.Values.ToList();
 
             if (!String.IsNullOrEmpty(title))
             {
                 var lowerTitleFilter = title.ToLower();
-                result = result
+                events = events
                     .Where(ev => ev.Title.ToLower().Contains(lowerTitleFilter));
             }
 
             if(from != null)
             {
-                result = result
+                events = events
                     .Where(ev => ev.StartAt.Date >= from.Value.Date);
             }
 
             if(to != null)
             {
-                result = result
+                events = events
                     .Where(ev => to.Value.Date >= ev.EndAt.Date);
             }
 
-            return result.ToList();
+            return events.ToList();
         }
 
         /// <summary>
@@ -79,34 +82,28 @@ namespace RU.Uncio.EventsAPI.Services
         /// </summary>
         /// <param name="id">ID parameter of event</param>
         /// <returns></returns>
-        public async Task<Event> GetEventAsync(Guid id)
+        public async Task<Event> GetEventAsync(Guid id, CancellationToken token)
         {
-            //if(repository.GetEvents().TryGetValue(id, out var ev))
-            //    return ev;
+            var events = await repository.GetEventsAsync(token);
 
-            var result = appDbContext.Events.FirstOrDefault(ev => ev.Id == id);
+            if (events.TryGetValue(id, out var ev))
+                return ev;
 
-            if(result != null)
-                return result;
-
+            logger.LogError($"Events collections doesn't contain an event with id {id}");
             return null;
         }
+
         /// <summary>
         /// Adds an event to collection
         /// </summary>
         /// <param name="ev">Event to add</param>
         /// <exception cref="ArgumentException"></exception>
-        public async Task AddEventAsync(Event ev)
+        public async Task AddEventAsync(Event ev, CancellationToken token)
         {
-            var existingEvent = appDbContext.Events.FirstOrDefault(e => e.Id == ev.Id);
+            var events = await repository.GetEventsAsync(token);
 
-            //if (!repository.GetEvents().ContainsKey(ev.Id))
-            //    repository.AddEvent(ev);
-            if (existingEvent == null)
-            {
-                await appDbContext.AddAsync(ev);
-                await appDbContext.SaveChangesAsync();
-            }
+            if (!events.TryGetValue(ev.Id, out var @event))
+                await repository.AddEventAsync(ev, token);
             else
             {
                 throw new EventExistsException($"Event with ID {ev.Id} already exists in the collection");
@@ -119,34 +116,22 @@ namespace RU.Uncio.EventsAPI.Services
         /// <param name="id">ID parameter of event</param>
         /// <param name="ev">Event to update</param>
         /// <exception cref="IndexOutOfRangeException"></exception>
-        public async Task UpdateEventAsync(Guid id, Event ev)
+        public async Task UpdateEventAsync(Guid id, Event ev, CancellationToken token)
         {
-            var currentEvent = appDbContext.Events.FirstOrDefault(ev => ev.Id == id);
+            var events = await repository.GetEventsAsync(token);
 
-            if (currentEvent != null)
+            if (events.TryGetValue(id, out var currentEvent))
             {
-                if(currentEvent.TotalSeats - currentEvent.AvailableSeats > ev.TotalSeats)
+                if (currentEvent.TotalSeats - currentEvent.AvailableSeats > ev.TotalSeats)
                 {
                     throw new TotalGreaterBookedException($"Not possible to change total seats. Amount of bookings for the event is greater than new total seats value");
                 }
                 else
                 {
                     currentEvent.UpdateWith(ev);
-                    appDbContext.Update(currentEvent);
-                    await appDbContext.SaveChangesAsync();
-                }                
+                    await repository.UpdateEventAsync(currentEvent, token);
+                }
             }
-            //if (repository.GetEvents().TryGetValue(id, out var currentEvent))
-            //{
-            //    if(currentEvent.TotalSeats - currentEvent.AvailableSeats > ev.TotalSeats)
-            //    {
-            //        throw new TotalGreaterBookedException($"Not possible to change total seats. Amount of bookings for the event is greater than new total seats value");
-            //    }
-            //    else
-            //    {
-            //        repository.UpdateEvent(id, ev);
-            //    }                
-            //}
             else
             {
                 throw new MissingEventException($"Events collections doesn't contain an event with id {id}");
@@ -158,19 +143,14 @@ namespace RU.Uncio.EventsAPI.Services
         /// </summary>
         /// <param name="id">ID parameter of event</param>
         /// <exception cref="IndexOutOfRangeException"></exception>
-        public async Task RemoveEventAsync(Guid id)
+        public async Task RemoveEventAsync(Guid id, CancellationToken token)
         {
-            var currentEvent = appDbContext.Events.FirstOrDefault(ev => ev.Id == id);
+            var events = await repository.GetEventsAsync(token);
 
-            if (currentEvent != null)
+            if (events.TryGetValue(id, out var _))
             {
-                appDbContext.Remove(currentEvent);
-                await appDbContext.SaveChangesAsync();
+                await repository.RemoveEventAsync(id, token);
             }
-            //if (repository.GetEvents().TryGetValue(id, out _))
-            //{
-            //    repository.RemoveEvent(id);
-            //}
             else
             {
                 throw new MissingEventException($"Events collections doesn't contain an event with id {id}");

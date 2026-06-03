@@ -36,10 +36,9 @@ namespace RU.Uncio.EventsAPI.Services
                 try
                 {
                     using var scope = scopeFactory.CreateScope();
-                    var repository = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var repository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
 
-                    var pendingBookings = await repository.Bookings
-                        .Where(b => b.Status == BookingStatus.Pending).ToListAsync();
+                    var pendingBookings = await repository.GetPendingBookingsAsync(stoppingToken);
 
                     scope.Dispose();
 
@@ -66,40 +65,44 @@ namespace RU.Uncio.EventsAPI.Services
         {
             await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             using var scope = scopeFactory.CreateScope();
-            var repository = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
+            var eventRepository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
 
             await processingSemaphore.WaitAsync(stoppingToken);
 
             try
             {
-                var targetBooking = repository.Bookings.FirstOrDefault(b => b.Id == bookingId);
-                if(targetBooking == null)
-                {
-                    throw new ArgumentException($"Booking with id {bookingId} doesn't exist");
-                }
+                var bookings = await bookingRepository.GetBookingsAsync(stoppingToken);
 
-                var existingEvent = repository.Events.FirstOrDefault(ev => targetBooking.EventId == ev.Id);
-                if (existingEvent != null)
+                if(bookings.TryGetValue(bookingId, out var targetBooking))
                 {
-                    try
+                    var events = await eventRepository.GetEventsAsync(stoppingToken);
+
+                    if (events.TryGetValue(targetBooking.EventId, out var existingEvent))
                     {
-                        targetBooking.Confirm();
+                        try
+                        {
+                            targetBooking.Confirm();
+                        }
+                        catch (Exception ex)
+                        {
+                            targetBooking.Reject();
+                            existingEvent.ReleaseSeats();
+                            logger.LogError(ex, $"Failed to book an event with ID {targetBooking.EventId}");
+                        }
                     }
-                    catch(Exception ex)
+                    else
                     {
-                        targetBooking.Reject();                        
-                        existingEvent.ReleaseSeats();
-                        logger.LogError(ex, $"Failed to book an event with ID {targetBooking.EventId}");
-                    }                    
+                        targetBooking.Reject();
+                        logger.LogWarning($"Failed to book an event with ID {targetBooking.EventId}");
+                    }
+
+                    await bookingRepository.UpdateBookingAsync(targetBooking, stoppingToken);
                 }
                 else
                 {
-                    targetBooking.Reject();
-                    logger.LogWarning($"Failed to book an event with ID {targetBooking.EventId}");
+                    throw new ArgumentException($"Booking with id {bookingId} doesn't exist");
                 }
-
-                repository.Update(targetBooking);
-                await repository.SaveChangesAsync();
             }
             finally
             {
