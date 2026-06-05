@@ -19,9 +19,12 @@ API to a DataMapper-backed model.
 
     dotnet run --launch-profile sw_https
 	
-## Run unit tests
+## Run unit and integration tests - (for integration tests running Docker is needed)
 	cd ..	
-    dotnet test
+    dotnet test	
+
+## Migrations history
+	InitialCreate - initial creation of DB schema (Entities - Events (table - events), Booking (table - bookings))
 
 # REST API
 
@@ -111,8 +114,7 @@ curl -X 'GET' \
 		  "title": "string",
 		  "description": "string",
 		  "startAt": "2026-02-15T12:03:22.941Z",
-		  "endAt": "2026-03-31T12:03:22.941Z",
-		  "totalSeats": 12
+		  "endAt": "2026-03-31T12:03:22.941Z"
 		}'
 
 ### Response
@@ -140,8 +142,7 @@ curl -X 'GET' \
 	  "title": "Test",
 	  "description": "Test1",
 	  "startAt": "2026-03-31T12:08:36.425Z",
-	  "endAt": "2026-04-30T12:08:36.425Z",
-		  "totalSeats": 12
+	  "endAt": "2026-04-30T12:08:36.425Z"
 		}'
 
 ### Response
