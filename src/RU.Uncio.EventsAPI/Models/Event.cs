@@ -45,6 +45,12 @@
         public Event() { }
 
         /// <summary>
+        /// Constructor for event deletion
+        /// </summary>
+        /// <param name="id"></param>
+        internal Event(Guid id) { Id = id; }
+
+        /// <summary>
         /// Event base constructor
         /// </summary>
         /// <param name="title"></param>

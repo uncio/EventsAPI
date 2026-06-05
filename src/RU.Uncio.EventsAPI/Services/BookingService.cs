@@ -12,7 +12,9 @@ namespace RU.Uncio.EventsAPI.Services
     /// </summary>
     public class BookingService : IBookingService
     {
-        private readonly AppDbContext appDbContext;
+        private readonly ILogger<BookingService> logger;
+        private readonly IEventsService eventService;
+        private readonly IBookingRepository repository;
 
         private static readonly SemaphoreSlim bookingSemaphore = new(1, 1);
 
@@ -20,9 +22,11 @@ namespace RU.Uncio.EventsAPI.Services
         /// constructor
         /// </summary>
         /// <param name="context"></param>
-        public BookingService(AppDbContext context)
+        public BookingService(ILogger<BookingService> log, IBookingRepository bookingRepo, IEventsService evService)
         {
-            appDbContext = context;
+            logger = log;
+            repository = bookingRepo;
+            eventService = evService;
         }
 
         /// <summary>
@@ -33,11 +37,12 @@ namespace RU.Uncio.EventsAPI.Services
         /// <returns></returns>
         public async Task<Booking> CreateBookingAsync(Guid eventId, CancellationToken token)
         {
+            var added = false;
             await bookingSemaphore.WaitAsync(token);
             Booking? newBooking = null;
             try
             {
-                var ev = await appDbContext.Events.FirstOrDefaultAsync(ev => ev.Id == eventId);
+                var ev = await eventService.GetEventAsync(eventId, token);
                 if (ev == null)
                 {
                     throw new MissingEventException($"Event with ID {eventId} is not found in the collection");
@@ -52,17 +57,14 @@ namespace RU.Uncio.EventsAPI.Services
 
                 newBooking = new Booking(eventId);
 
-                await appDbContext.Bookings.AddAsync(newBooking);
-                await appDbContext.SaveChangesAsync();
+                added = await repository.AddBookingAsync(newBooking, token);
             }
             finally
             {
                 bookingSemaphore.Release();
             }            
 
-            var added = appDbContext.Bookings.FirstOrDefault(b => b.Id == newBooking.Id);
-
-            return added != null ? newBooking : null;
+            return added ? newBooking : null;
         }
 
         /// <summary>
@@ -73,12 +75,12 @@ namespace RU.Uncio.EventsAPI.Services
         /// <returns></returns>
         public async Task<Booking> GetBookingByIdAsync(Guid bookingId, CancellationToken token)
         {
-            var bookings = appDbContext.Bookings
-                .ToDictionary(b => b.Id);
+            var bookings = await repository.GetBookingsAsync(token);
 
             if (bookings.TryGetValue(bookingId, out var booking))
                 return booking;
 
+            logger.LogError($"Booking queue doesn't contain a booking with id {bookingId}");
             return null;
         }        
     }

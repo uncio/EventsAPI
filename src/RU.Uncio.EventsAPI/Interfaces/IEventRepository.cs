@@ -11,22 +11,22 @@ namespace RU.Uncio.EventsAPI.Interfaces
         /// Gets all events from collection
         /// </summary>
         /// <returns>Collection of events</returns>
-        Dictionary<Guid, Event> GetEvents();
+        Task<Dictionary<Guid, Event>> GetEventsAsync(CancellationToken token);
         /// <summary>
         /// Adds an event to collection
         /// </summary>
         /// <param name="ev">Event to add</param>
-        void AddEvent(Event ev);
+        /// <param name="token"></param>
+        Task AddEventAsync(Event ev, CancellationToken token);
         /// <summary>
         /// Updates an event in collection by event ID
         /// </summary>
-        /// <param name="id">ID parameter of event</param>
         /// <param name="ev">Event to update</param>
-        void UpdateEvent(Guid id, Event ev);
+        Task UpdateEventAsync(Event ev, CancellationToken token);
         /// <summary>
         /// Deletes an event from collection by event ID
         /// </summary>
         /// <param name="id"></param>
-        void RemoveEvent(Guid id);
+        Task RemoveEventAsync(Guid id, CancellationToken token);
     }
 }

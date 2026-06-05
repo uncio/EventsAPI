@@ -1,4 +1,6 @@
-﻿using RU.Uncio.EventsAPI.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using RU.Uncio.EventsAPI.DataAccess;
+using RU.Uncio.EventsAPI.Interfaces;
 using RU.Uncio.EventsAPI.Models;
 using System.Collections.Concurrent;
 
@@ -7,12 +9,10 @@ namespace RU.Uncio.EventsAPI.Repositories
     /// <summary>
     /// Concrete in memory bookings repository
     /// </summary>
-    public class InMemoryBookingRepository : IBookingRepository
+    public class BookingRepository : IBookingRepository
     {
-        /// <summary>
-        /// Collection of bookings
-        /// </summary>
-        public static ConcurrentDictionary<Guid, Booking> Bookings = new();
+        private readonly AppDbContext db;
+        public BookingRepository(AppDbContext dB) { db = dB; }
 
         /// <summary>
         /// Adds a booking to collection
@@ -22,7 +22,10 @@ namespace RU.Uncio.EventsAPI.Repositories
         /// <returns>result of adding, true if succeded</returns>
         public async Task<bool> AddBookingAsync(Booking book, CancellationToken token)
         {
-            return Bookings.TryAdd(book.Id, book);
+            await db.Bookings.AddAsync(book, token); 
+            await db.SaveChangesAsync(token);
+
+            return true;
         }
 
         /// <summary>
@@ -32,7 +35,7 @@ namespace RU.Uncio.EventsAPI.Repositories
         /// <returns>collection of existing bookings</returns>
         public async Task<Dictionary<Guid, Booking>> GetBookingsAsync(CancellationToken token)
         {
-            return Bookings.ToDictionary(x => x.Key, x => x.Value);
+            return await db.Bookings.ToDictionaryAsync(x => x.Id, token);
         }
 
         /// <summary>
@@ -42,9 +45,9 @@ namespace RU.Uncio.EventsAPI.Repositories
         /// <returns></returns>
         public async Task<ConcurrentBag<Booking>> GetPendingBookingsAsync(CancellationToken token)
         {
-            return new ConcurrentBag<Booking>(Bookings
-                .Where(b => b.Value.Status == BookingStatus.Pending)
-                .Select(b => b.Value));
+            var result = db.Bookings
+                .Where(b => b.Status == BookingStatus.Pending);
+            return [.. result];
         }
 
         /// <summary>
@@ -55,8 +58,8 @@ namespace RU.Uncio.EventsAPI.Repositories
         /// <returns></returns>
         public async Task UpdateBookingAsync(Booking booking, CancellationToken token)
         {
-            Bookings[booking.Id].Status = booking.Status;
-            Bookings[booking.Id].ProcessedAt = booking.ProcessedAt;
+            db.Bookings.Update(booking);
+            await db.SaveChangesAsync();
         }
     }
 }
