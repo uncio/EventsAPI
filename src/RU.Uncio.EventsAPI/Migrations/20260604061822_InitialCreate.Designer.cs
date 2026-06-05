@@ -12,7 +12,7 @@ using RU.Uncio.EventsAPI.DataAccess;
 namespace RU.Uncio.EventsAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260603135115_InitialCreate")]
+    [Migration("20260604061822_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
