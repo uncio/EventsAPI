@@ -24,7 +24,43 @@ API to a DataMapper-backed model.
     dotnet test	
 	
 ## Migrations
-	dotnet ef migrations add InitialCreate --startup-project ../RU.Uncio.Presentation
+	dotnet ef migrations add InitialCreate --startup-project ../RU.Uncio.Presentation --project RU.Uncio.Infrastructure
+
+## Структура проекта
+
+**Слои архитектуры:**
+*   Domain: сущности и модели данных
+*   Application: реализация сервисов и DTO, маппинг объектов
+*   Infrastructure: реализации репозиториев, DbContext
+*   Presentation: реализация контроллеров и эндпойнтов, глобальный обработчик ошибок.
+
+**Диаграмма слоёв:**
+    Presentation --> Infrastructure --> Domain: Хранение и Обработка данных
+    Presentation --> Application --> Domain: обработка бизнес-случаев
+
+**Слои по папкам:**
+
+├── domain/
+│   ├── exceptions/
+│   └── models/
+├── application/
+│   ├── auxiliary/
+│   ├── backservices/
+│   ├── dto/
+│   ├── interfaces/
+│   └── services/
+├── utils/
+│   ├── auxiliary/
+│   ├── dataaccess/
+│   │   ├── configurations/
+│   │   └── AppDbContext
+│   ├──  migrations/
+│   └── repositories/
+├── presentation/
+│   ├── auxiliary/
+│   ├── middlewares/
+│   └── controllers/
+└── Program
 
 # REST API
 
