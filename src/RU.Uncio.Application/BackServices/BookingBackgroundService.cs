@@ -3,27 +3,22 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RU.Uncio.Application.Interfaces;
 
-namespace RU.Uncio.EventsAPI.Services
+namespace RU.Uncio.Application.Backservices
 {
     /// <summary>
     /// Background watcher for new bookings
     /// </summary>
-    public class BookingBackgroundService: BackgroundService
+    /// <remarks>
+    /// 
+    /// </remarks>
+    /// <param name="scFactory"></param>
+    /// <param name="log"></param>
+    public class BookingBackgroundService(IServiceScopeFactory scFactory, ILogger<BookingBackgroundService> log) : BackgroundService
     {
-        private readonly ILogger<BookingBackgroundService> logger;
-        private readonly IServiceScopeFactory scopeFactory;
+        private readonly ILogger<BookingBackgroundService> logger = log;
+        private readonly IServiceScopeFactory scopeFactory = scFactory;
         private static readonly SemaphoreSlim processingSemaphore = new(1, 1);
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="scFactory"></param>
-        /// <param name="log"></param>
-        public BookingBackgroundService(IServiceScopeFactory scFactory, ILogger<BookingBackgroundService> log)
-        {
-            scopeFactory = scFactory;
-            logger = log;
-        }
         /// <summary>
         /// Background service
         /// </summary>
@@ -42,7 +37,7 @@ namespace RU.Uncio.EventsAPI.Services
 
                     scope.Dispose();
 
-                    if (pendingBookings != null && pendingBookings.Any())
+                    if (pendingBookings != null && !pendingBookings.IsEmpty)
                     {
                         var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking.Id, stoppingToken));
                         await Task.WhenAll(tasks);                        

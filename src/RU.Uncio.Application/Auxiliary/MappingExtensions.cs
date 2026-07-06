@@ -1,7 +1,7 @@
 ﻿using RU.Uncio.Application.DTO;
 using RU.Uncio.Domain.Models;
 
-namespace RU.Uncio.EventsAPI.Auxiliary
+namespace RU.Uncio.Application.Auxiliary
 {
     /// <summary>
     /// Extensions to map models to dto

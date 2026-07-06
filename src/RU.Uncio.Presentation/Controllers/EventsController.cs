@@ -2,11 +2,12 @@
 using RU.Uncio.Application.DTO;
 using RU.Uncio.Application.Interfaces;
 using RU.Uncio.Domain.Models;
-using RU.Uncio.EventsAPI.Auxiliary;
+using RU.Uncio.Application.Auxiliary;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
+using RU.Uncio.EventsAPI;
 
-namespace RU.Uncio.EventsAPI.Controllers
+namespace RU.Uncio.Presentation.Controllers
 {
     /// <summary>
     /// Events controller
@@ -42,7 +43,7 @@ namespace RU.Uncio.EventsAPI.Controllers
                     paginatedEvents.Count(),
                     page,
                     totalPages,
-                    events.Count()
+                    events.Count
                 );
 
             return Ok(new ApiResult<PaginatedResultDTO<EventDTO>>
@@ -58,6 +59,7 @@ namespace RU.Uncio.EventsAPI.Controllers
         /// Returns an event by ID from collection
         /// </summary>
         /// <param name="id">Id parameter to get an event</param>
+        /// <param name="token"></param>
         /// <response code="200">JSON-schema of ApiBaseResult is returned with found event and detailed responce
         /// and HTTP status-code 200 Ok in case of success</response>
         [ProducesResponseType(typeof(ApiBaseResult), StatusCodes.Status200OK)]
@@ -95,6 +97,7 @@ namespace RU.Uncio.EventsAPI.Controllers
         /// Adds an event from request body to collection
         /// </summary>
         /// <param name="ev">Event from request body to add</param>
+        /// <param name="token"></param>
         /// <response code="201">JSON-schema is returned of ApiResult with detailed responce
         /// and HTTP status-code 201 Created in case of success</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status201Created)]
@@ -126,6 +129,7 @@ namespace RU.Uncio.EventsAPI.Controllers
         /// </summary>
         /// <param name="id">Id parameter to update an event</param>
         /// <param name="ev">Event from request body to update</param>
+        /// <param name="token"></param>
         /// <response code="204">JSON-schema is returned of ApiResult with detailed responce
         /// and HTTP status-code 204 NoContent in case of success</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
@@ -150,6 +154,7 @@ namespace RU.Uncio.EventsAPI.Controllers
         /// Deletes an event by ID from collection
         /// </summary>
         /// <param name="id">Id parameter of the event to delete</param>
+        /// <param name="token"></param>
         /// <response code="204">JSON-schema is returned of ApiResult with detailed responce
         /// and HTTP status-code 204 NoContent in case of success</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]

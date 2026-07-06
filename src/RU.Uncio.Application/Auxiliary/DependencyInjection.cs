@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using RU.Uncio.Application.Backservices;
 using RU.Uncio.Application.Interfaces;
 using RU.Uncio.Application.Services;
-using RU.Uncio.EventsAPI.Services;
 
 namespace RU.Uncio.Application.Auxiliary
 {
