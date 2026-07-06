@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RU.Uncio.EventsAPI\RU.Uncio.Presentation.csproj" />
+    <ProjectReference Include="..\RU.Uncio.Domain\RU.Uncio.Domain.csproj" />
     <ProjectReference Include="..\RU.Uncio.Infrastructure\RU.Uncio.Infrastructure.csproj" />
   </ItemGroup>
 
