@@ -1,13 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using RU.Uncio.EventsAPI.DataAccess;
-using RU.Uncio.EventsAPI.Models;
-using RU.Uncio.EventsAPI.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using RU.Uncio.Domain.Models;
+using RU.Uncio.Infrastructure.DataAccess;
+using RU.Uncio.Infrastructure.Repositories;
 using Testcontainers.PostgreSql;
 using Xunit;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace EventsAPI.IntegrationTests
 {

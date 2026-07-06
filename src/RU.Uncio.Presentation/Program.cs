@@ -1,0 +1,128 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using RU.Uncio.Application.DTO;
+using RU.Uncio.Application.Interfaces;
+using RU.Uncio.Application.Auxiliary;
+using RU.Uncio.EventsAPI;
+using RU.Uncio.EventsAPI.Auxiliary;
+using RU.Uncio.EventsAPI.Middlewares;
+using RU.Uncio.Infrastructure.Auxiliary;
+using RU.Uncio.Infrastructure.DataAccess;
+using System.Net;
+using System.Reflection;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        // Эта опция отключает автоматическую проверку валидации 
+        options.SuppressModelStateInvalidFilter = true;
+    });
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
+
+// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddSwaggerGen(options =>
+{
+    // Путь к XML-файлу с документацией
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath);
+});
+
+var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    //db.Database.EnsureDeleted();
+    db.Database.Migrate();
+}
+
+//app.UseAuthorization();
+
+app.MapControllers();
+
+app.MapPost("Events/{id}/book", async ([FromRoute] Guid id, IBookingService service, CancellationToken token) =>
+{
+    try
+    {        
+        var result = await service.CreateBookingAsync(id, token);
+
+        if(result != null)
+        {
+            var booking = result.MapToDto();
+            app.Logger.LogInformation("Booking processed");
+            return Results.Accepted(uri: $"/bookings/{booking.Id}", value: new ApiResult<BookingDTO>
+            {
+                Data = booking,
+                Success = true,
+                StatusCode = HttpStatusCode.Accepted,
+                Message = $"Adding booking for event with ID {id} in collection"
+            });
+        }
+        else
+        {
+            return Results.BadRequest(new ApiResult
+            {
+                Success = false,
+                StatusCode = HttpStatusCode.BadRequest,
+                Message = $"Event with ID {id} is not found in the collection"
+            });
+        }        
+    }
+    catch (OperationCanceledException)
+    {
+        app.Logger.LogWarning("Client Closed Request");
+        return Results.StatusCode(499); //Client Closed Request
+    }
+});
+
+app.MapGet("/bookings/{id}", async ([FromRoute] Guid id, IBookingService service, CancellationToken token) =>
+{
+    try
+    {
+        var result = await service.GetBookingByIdAsync(id, token);
+        if(result != null)
+        {
+            var booking = result.MapToDto();
+            return Results.Ok(value: new ApiResult<BookingDTO>
+            {
+                Data = booking,
+                Success = true,
+                StatusCode = HttpStatusCode.OK,
+                Message = $"Getting booking with ID {id} from collection"
+            });
+        }
+        else
+        {
+            return Results.NotFound(new ApiResult
+            {
+                Success = false,
+                StatusCode = HttpStatusCode.NotFound,
+                Message = $"Booking with ID {id} is not found in the collection"
+            });
+        }
+    }
+    catch (OperationCanceledException)
+    {
+        app.Logger.LogWarning("Client Closed Request");
+        return Results.StatusCode(499); //Client Closed Request
+    }
+});
+
+app.Run();

@@ -2,11 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json.Linq;
-using Npgsql;
-using RU.Uncio.EventsAPI.DataAccess;
-using RU.Uncio.EventsAPI.Models;
-using RU.Uncio.EventsAPI.Repositories;
-using RU.Uncio.EventsAPI.Services;
+using RU.Uncio.Application.Services;
+using RU.Uncio.Domain.Models;
+using RU.Uncio.Infrastructure.DataAccess;
+using RU.Uncio.Infrastructure.Repositories;
 using Testcontainers.PostgreSql;
 using Xunit;
 
