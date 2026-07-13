@@ -1,13 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Moq;
-using RU.Uncio.EventsAPI.DataAccess;
-using RU.Uncio.EventsAPI.DTO;
-using RU.Uncio.EventsAPI.Exceptions;
-using RU.Uncio.EventsAPI.Interfaces;
-using RU.Uncio.EventsAPI.Models;
-using RU.Uncio.EventsAPI.Services;
+using RU.Uncio.Application.Interfaces;
+using RU.Uncio.Application.Services;
+using RU.Uncio.Domain.Exceptions;
+using RU.Uncio.Domain.Models;
 
 namespace EventsAPI.Tests
 {

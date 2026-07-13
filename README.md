@@ -5,7 +5,7 @@ API to a DataMapper-backed model.
 
 ## "Install"
 
-    cd EventsAPI\src\RU.Uncio.EventsAPI
+    cd EventsAPI\src\RU.Uncio.Presentation
 
 ## Build the app
 
@@ -19,12 +19,48 @@ API to a DataMapper-backed model.
 
     dotnet run --launch-profile sw_https
 	
-## Run unit and integration tests - (for integration tests running Docker is needed)
+## Run unit tests
 	cd ..	
     dotnet test	
+	
+## Migrations
+	dotnet ef migrations add InitialCreate --startup-project ../RU.Uncio.Presentation --project RU.Uncio.Infrastructure
 
-## Migrations history
-	InitialCreate - initial creation of DB schema (Entities - Events (table - events), Booking (table - bookings))
+## Структура проекта
+
+**Слои архитектуры:**
+*   Domain: сущности и модели данных
+*   Application: реализация сервисов и DTO, маппинг объектов
+*   Infrastructure: реализации репозиториев, DbContext
+*   Presentation: реализация контроллеров и эндпойнтов, глобальный обработчик ошибок.
+
+**Диаграмма слоёв:**
+    Presentation --> Infrastructure --> Domain: Хранение и Обработка данных
+    Presentation --> Application --> Domain: обработка бизнес-случаев
+
+**Слои по папкам:**
+
+├── domain/
+│   ├── exceptions/
+│   └── models/
+├── application/
+│   ├── auxiliary/
+│   ├── backservices/
+│   ├── dto/
+│   ├── interfaces/
+│   └── services/
+├── utils/
+│   ├── auxiliary/
+│   ├── dataaccess/
+│   │   ├── configurations/
+│   │   └── AppDbContext
+│   ├──  migrations/
+│   └── repositories/
+├── presentation/
+│   ├── auxiliary/
+│   ├── middlewares/
+│   └── controllers/
+└── Program
 
 # REST API
 
@@ -114,7 +150,8 @@ curl -X 'GET' \
 		  "title": "string",
 		  "description": "string",
 		  "startAt": "2026-02-15T12:03:22.941Z",
-		  "endAt": "2026-03-31T12:03:22.941Z"
+		  "endAt": "2026-03-31T12:03:22.941Z",
+		  "totalSeats": 12
 		}'
 
 ### Response
@@ -142,7 +179,8 @@ curl -X 'GET' \
 	  "title": "Test",
 	  "description": "Test1",
 	  "startAt": "2026-03-31T12:08:36.425Z",
-	  "endAt": "2026-04-30T12:08:36.425Z"
+	  "endAt": "2026-04-30T12:08:36.425Z",
+		  "totalSeats": 12
 		}'
 
 ### Response

@@ -2,7 +2,12 @@
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
-  <Project Path="EventsAPI.IntegrationTests/EventsAPI.IntegrationTests.csproj" />
-  <Project Path="EventsAPI.Tests/EventsAPI.Tests.csproj" Id="c4accd7f-9b8e-4281-8920-ab828cd802fd" />
-  <Project Path="RU.Uncio.EventsAPI/RU.Uncio.EventsAPI.csproj" />
+  <Folder Name="/Tests/">
+    <Project Path="EventsAPI.IntegrationTests/EventsAPI.IntegrationTests.csproj" />
+    <Project Path="EventsAPI.Tests/EventsAPI.Tests.csproj" Id="c4accd7f-9b8e-4281-8920-ab828cd802fd" />
+  </Folder>
+  <Project Path="RU.Uncio.Application/RU.Uncio.Application.csproj" Id="dd737773-2d3d-4ed5-8252-9b2f7dc8de0e" />
+  <Project Path="RU.Uncio.Domain/RU.Uncio.Domain.csproj" Id="f2e60a7e-3910-4e8b-98af-f3052499f729" />
+  <Project Path="RU.Uncio.Infrastructure/RU.Uncio.Infrastructure.csproj" Id="c9677688-bd32-4645-aa6b-fa156bb7233c" />
+  <Project Path="RU.Uncio.Presentation/RU.Uncio.Presentation.csproj" />
 </Solution>

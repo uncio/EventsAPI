@@ -1,23 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyModel;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Moq;
-using RU.Uncio.EventsAPI.DataAccess;
-using RU.Uncio.EventsAPI.Exceptions;
-using RU.Uncio.EventsAPI.Interfaces;
-using RU.Uncio.EventsAPI.Models;
-using RU.Uncio.EventsAPI.Services;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http.Json;
-using System.Runtime.Intrinsics.Arm;
-using System.Text;
-using System.Xml.Linq;
+using RU.Uncio.Application.Interfaces;
+using RU.Uncio.Application.Services;
+using RU.Uncio.Domain.Exceptions;
+using RU.Uncio.Domain.Models;
 
 namespace EventsAPI.Tests
 {

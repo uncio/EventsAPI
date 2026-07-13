@@ -1,0 +1,48 @@
+﻿
+using RU.Uncio.Domain.Models;
+
+namespace RU.Uncio.Application.Interfaces
+{
+    /// <summary>
+    /// Events manipulation service interface
+    /// </summary>
+    public interface IEventsService
+    {
+        /// <summary>
+        /// Gets all events from collection
+        /// </summary>
+        /// <returns>Collection of events</returns>
+        Task<List<Event>> GetEventsAsync(CancellationToken token, string? title, DateTime? from, DateTime? to);
+        /// <summary>
+        /// Gets an event from collection by ID
+        /// </summary>
+        /// <param name="id">ID parameter of event</param>
+        /// <returns>Event instance</returns>
+        Task<Event> GetEventAsync(Guid id, CancellationToken token);
+        /// <summary>
+        /// Adds an event to collection
+        /// </summary>
+        /// <param name="ev">Event to add</param>
+        Task AddEventAsync(Event ev, CancellationToken token);
+        /// <summary>
+        /// Updates an event in collection by event ID
+        /// </summary>
+        /// <param name="id">ID parameter of event</param>
+        /// <param name="ev">Event to update</param>
+        Task UpdateEventAsync(Guid id, Event ev, CancellationToken token);
+        /// <summary>
+        /// Deletes an event from collection by event ID
+        /// </summary>
+        /// <param name="id"></param>
+        Task RemoveEventAsync(Guid id, CancellationToken token);
+        /// <summary>
+        /// Returns paginated events
+        /// </summary>
+        /// <param name="filtered">events after filtering</param>
+        /// <param name="page">page number</param>
+        /// <param name="pageSize">items number per page</param>
+        /// <param name="totalPages"></param>
+        /// <returns>calculated amount of pages</returns>
+        List<Event> GetPaginatedEvents(IEnumerable<Event> filtered, int page, int pageSize, out int totalPages);
+    }
+}
