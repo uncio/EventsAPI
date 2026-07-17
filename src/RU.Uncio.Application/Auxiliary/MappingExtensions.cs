@@ -68,6 +68,7 @@ namespace RU.Uncio.Application.Auxiliary
                 Name = mappingObject.Name,
                 Login = mappingObject.Login,
                 Role = mappingObject.Role,
+                Bookings = mappingObject.Bookings.Select(b => b.MapToDto()).ToList(),
                 Password = ""
             };
 

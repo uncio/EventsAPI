@@ -35,5 +35,9 @@ namespace RU.Uncio.Application.DTO
         /// User role
         /// </summary>
         public Roles Role { get; set; }
+        /// <summary>
+        /// User bookings
+        /// </summary>
+        public List<BookingDTO> Bookings { get; set; } = new();
     }
 }

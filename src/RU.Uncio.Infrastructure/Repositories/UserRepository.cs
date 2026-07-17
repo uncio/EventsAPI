@@ -39,7 +39,7 @@ namespace RU.Uncio.Infrastructure.Repositories
         /// <returns></returns>
         public async Task<List<User>> GetAllUsersAsync(CancellationToken token)
         {
-            return await db.Users.ToListAsync();
+            return await db.Users.Include(u => u.Bookings).ToListAsync();
         }
         /// <summary>
         /// Gets a user from DB by ID
@@ -49,7 +49,7 @@ namespace RU.Uncio.Infrastructure.Repositories
         /// <returns></returns>
         public async Task<User> GetUserAsync(Guid id, CancellationToken token)
         {
-            return await db.Users.FirstOrDefaultAsync(u => u.Id.Equals(id), token);
+            return await db.Users.Include(u => u.Bookings).FirstOrDefaultAsync(u => u.Id.Equals(id), token);
         }
         /// <summary>
         /// Gets a user from DB by Login
@@ -59,7 +59,7 @@ namespace RU.Uncio.Infrastructure.Repositories
         /// <returns></returns>
         public async Task<User> GetUserByLoginAsync(string login, CancellationToken token)
         {
-            return await db.Users.FirstOrDefaultAsync(u => u.Login.Equals(login), token);
+            return await db.Users.Include(u => u.Bookings).FirstOrDefaultAsync(u => u.Login.Equals(login), token);
         }
     }
 }
