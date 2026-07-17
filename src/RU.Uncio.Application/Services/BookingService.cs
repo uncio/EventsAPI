@@ -146,6 +146,7 @@ namespace RU.Uncio.Application.Services
                     booking.Cancell();
                     user.RemoveBooking(bookingId);
                     ev.ReleaseSeats();
+                    await repository.UpdateBookingAsync(booking, token);
                 }
                 else
                 {
