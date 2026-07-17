@@ -25,6 +25,7 @@ API to a DataMapper-backed model.
 	
 ## Migrations
 	dotnet ef migrations add InitialCreate --startup-project ../RU.Uncio.Presentation --project RU.Uncio.Infrastructure
+	dotnet ef migrations add Users --startup-project ../RU.Uncio.Presentation --project RU.Uncio.Infrastructure
 
 ## Структура проекта
 
@@ -61,6 +62,25 @@ API to a DataMapper-backed model.
 │   ├── middlewares/
 │   └── controllers/
 └── Program
+
+## RBAC — Role-Based Access Control
+
+**Roles:**
+*   User: common user with limited rights
+*   Admin: user with extended rights
+
+**Rights:**
+*   Anonimous: register user (user role by default), login, list all events, det exact event info
+*   User: same as Anonimous plus book event, get event booking
+*   Admin: same as Anonimous and User plus list all users, create event, update event, delete event, cancel event booking
+
+## Swagger - getting token
+* Login endpoint - POST /User/auth/login
+* Copy token to Swagger Authorize button
+
+## Secret keeping
+* Developement - secret is being kept in Configuration
+* Production - move secret to Environment variables or other safe secrets manager
 
 # REST API
 
@@ -220,8 +240,9 @@ curl -X 'GET' \
 `POST /events/id/book`
 
 curl -X 'POST' \
-  'https://localhost:7134/Events/34ad8b51-a6bb-4a9f-8b2e-e5fd07bc855b/book' \
+  'https://localhost:7134/Events/14c43653-3a34-4faf-b0c4-068928adbe21/book' \
   -H 'accept: */*' \
+  -H 'Authorization: Bearer <token>' \
   -d ''
 
 ### Response
@@ -247,9 +268,10 @@ Result JSON-schema
 
 `GET /bookings/id`
 
-    curl -X 'DELETE' \
-	  'https://localhost:7134/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
-	  -H 'accept: text/plain'
+curl -X 'GET' \
+  'https://localhost:7134/bookings/4828c27c-adcd-4c32-8336-3499a9961449' \
+  -H 'accept: */*' \
+  -H 'Authorization: Bearer <token>'
 
 ### Response
 
@@ -266,4 +288,123 @@ Result JSON-schema
   "statusCode": 200,
   "dateTime": "2026-04-27T17:43:30.5176803Z",
   "message": "Getting booking with ID 4828c27c-adcd-4c32-8336-3499a9961449 from collection"
+}	
+
+## Cancel an event booking
+
+### Request
+
+`DELETE /bookings/id`
+
+curl -X 'DELETE' \
+  'https://localhost:7134/bookings/4c63ead7-86d7-481e-b827-aeb5a52ef74d' \
+  -H 'accept: */*' \
+  -H 'Authorization: Bearer <token>'
+
+### Response
+
+	Result JSON-schema
+	{
+	  "success": true,
+	  "statusCode": 204,
+	  "dateTime": "2026-03-31T11:54:40.113Z",
+	  "message": "string"
+	}
+
+
+## Get list of Users
+
+### Request
+
+`GET /users/`
+
+curl -X 'GET' \
+  'https://localhost:7134/Users' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer <token>'
+
+### Response
+{
+  "data": [
+    {
+      "id": "ede5a3d2-34f7-41a1-bcd3-89b5e58340e9",
+      "name": "User1234",
+      "login": "User1234",
+      "password": "",
+      "role": 0
+    },
+    {
+      "id": "d6a2b3db-d7da-4f76-bf2b-b1015b889709",
+      "name": "string",
+      "login": "Admin321@",
+      "password": "",
+      "role": 1
+    }
+  ],
+  "success": true,
+  "statusCode": 200,
+  "dateTime": "2026-07-17T12:03:35.7543971Z",
+  "message": "Getting all users from DB"
+}
+
+## Create a new user
+
+### Request
+
+`POST /Users/auth/register`
+
+curl -X 'POST' \
+  'https://localhost:7134/Users/auth/register' \
+  -H 'accept: text/plain' \
+  -H 'Authorization: Bearer <token>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "name": "NewUser",
+  "login": "NewUser123",
+  "password": "NewUser123",
+  "role": 0
+}'
+
+### Response
+
+{
+  "data": {
+    "id": "3ba92ea7-d149-4d71-8986-e2894f89eef8",
+    "name": "NewUser",
+    "login": "NewUser123",
+    "password": "",
+    "role": 0
+  },
+  "success": true,
+  "statusCode": 201,
+  "dateTime": "2026-07-17T12:05:47.2836345Z",
+  "message": "User NewUser : NewUser123 added to DB"
+}
+
+## Login
+
+### Request
+
+`POST /Users/auth/login`
+
+curl -X 'POST' \
+  'https://localhost:7134/Users/auth/login' \
+  -H 'accept: text/plain' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "email": "Admin321@",
+  "password": "Admin321@",
+  "twoFactorCode": "string",
+  "twoFactorRecoveryCode": "string"
+}'
+
+### Response
+
+{
+  "data": "<token>",
+  "success": true,
+  "statusCode": 200,
+  "dateTime": "2026-07-17T12:03:17.8398013Z",
+  "message": "User Token"
 }
