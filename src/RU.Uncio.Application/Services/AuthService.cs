@@ -5,6 +5,7 @@ using RU.Uncio.Application.Interfaces;
 using RU.Uncio.Domain.Models;
 using System;
 using System.Collections.Generic;
+using System.Security.Claims;
 using System.Text;
 
 namespace RU.Uncio.Application.Services
@@ -33,8 +34,10 @@ namespace RU.Uncio.Application.Services
         {
             var claims = new Dictionary<string, object>
             {
-                [JwtRegisteredClaimNames.Sub] = user.Id.ToString(),
-                ["role"] = user.Role.ToString(),
+                //[JwtRegisteredClaimNames.Sub] = user.Id.ToString(),
+                //["role"] = user.Role.ToString(),
+                [ClaimTypes.NameIdentifier] = user.Id.ToString(),
+                [ClaimTypes.Role] = user.Role.ToString(),
             };
 
             var key = new SymmetricSecurityKey(

@@ -6,6 +6,7 @@ using Microsoft.OpenApi;
 using RU.Uncio.Application.Auxiliary;
 using RU.Uncio.Application.DTO;
 using RU.Uncio.Application.Interfaces;
+using RU.Uncio.Domain.Models;
 using RU.Uncio.EventsAPI;
 using RU.Uncio.EventsAPI.Middlewares;
 using RU.Uncio.Infrastructure.Auxiliary;
@@ -13,6 +14,7 @@ using RU.Uncio.Infrastructure.DataAccess;
 using RU.Uncio.Presentation.Controllers;
 using System.Net;
 using System.Reflection;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,8 +39,6 @@ builder.Services.AddAuthentication(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            RoleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
-            NameClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier",
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidateAudience = false,
