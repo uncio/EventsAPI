@@ -52,5 +52,27 @@ namespace RU.Uncio.Application.Auxiliary
 
             return dest;
         }
+        /// <summary>
+        /// Mapper for user
+        /// </summary>
+        /// <param name="mappingObject"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static UserDTO MapToDto(this User? mappingObject)
+        {
+            if (mappingObject == null)
+                throw new ArgumentNullException(nameof(mappingObject));
+            UserDTO dest = new()
+            {
+                Id = mappingObject.Id,
+                Name = mappingObject.Name,
+                Login = mappingObject.Login,
+                Role = mappingObject.Role,
+                Bookings = mappingObject.Bookings.Select(b => b.MapToDto()).ToList(),
+                Password = ""
+            };
+
+            return dest;
+        }
     }
 }

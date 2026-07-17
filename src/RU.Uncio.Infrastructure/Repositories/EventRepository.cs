@@ -6,17 +6,22 @@ using RU.Uncio.Infrastructure.DataAccess;
 namespace RU.Uncio.Infrastructure.Repositories
 {
     /// <summary>
-    /// Concrete in memory events repository
+    /// Concrete events repository
     /// </summary>
     public class EventRepository : IEventRepository
     {
         private readonly AppDbContext db;
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dB"></param>
         public EventRepository(AppDbContext dB) { db = dB; }
 
         /// <summary>
         /// Adds an event to DB
         /// </summary>
         /// <param name="ev">Event to add</param>
+        /// <param name="token">cancellation token</param>
         public async Task AddEventAsync(Event ev, CancellationToken token)
         {
             await db.Events.AddAsync(ev, token);
@@ -33,6 +38,7 @@ namespace RU.Uncio.Infrastructure.Repositories
         /// Deletes an event from collection by event ID
         /// </summary>
         /// <param name="id"></param>
+        /// <param name="token">cancellation token</param>
         public async Task RemoveEventAsync(Guid id, CancellationToken token)
         {
             var @event = new Event(id);
@@ -44,6 +50,7 @@ namespace RU.Uncio.Infrastructure.Repositories
         /// Updates an event in collection by event ID
         /// </summary>
         /// <param name="ev">Event to update</param>
+        /// <param name="token">cancellation token</param>
         public async Task UpdateEventAsync(Event ev, CancellationToken token)
         {
             db.Events.Update(ev);

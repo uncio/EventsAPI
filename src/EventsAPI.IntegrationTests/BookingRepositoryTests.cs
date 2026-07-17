@@ -9,7 +9,9 @@ namespace EventsAPI.IntegrationTests
 {
     public class BookingRepositoryTests : IAsyncLifetime
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
+#pragma warning restore CS0618 // Type or member is obsolete
         .WithImage("postgres:16-alpine")
         .Build();
 
@@ -38,7 +40,7 @@ namespace EventsAPI.IntegrationTests
         {
             await using var context = CreateContext();
             await context.Database.ExecuteSqlRawAsync(
-                "TRUNCATE TABLE events, bookings RESTART IDENTITY CASCADE");
+                "TRUNCATE TABLE events, bookings, users RESTART IDENTITY CASCADE");
         }
 
         [Fact]
@@ -53,9 +55,13 @@ namespace EventsAPI.IntegrationTests
             var repository = new BookingRepository(context);
             var ev = new Event("Title1", DateTime.Now.ToUniversalTime() - TimeSpan.FromDays(1), DateTime.Now.ToUniversalTime() + TimeSpan.FromDays(1), 10);
             context.Events.Add(ev);
+            var uRepository = new UserRepository(context);
+            var u = new User("User1234", "12345678");
+            context.Users.Add(u);
+
             await context.SaveChangesAsync();
 
-            var booking = new Booking(ev.Id);
+            var booking = new Booking(u.Id, ev.Id);
             // Act
             await repository.AddBookingAsync(booking, t.Token);
 
@@ -81,9 +87,12 @@ namespace EventsAPI.IntegrationTests
             var repository = new BookingRepository(context);
             var ev = new Event("Title1", DateTime.Now.ToUniversalTime() - TimeSpan.FromDays(1), DateTime.Now.ToUniversalTime() + TimeSpan.FromDays(1), 10);
             context.Events.Add(ev);
+            var uRepository = new UserRepository(context);
+            var u = new User("User1234", "12345678");
+            context.Users.Add(u);
             await context.SaveChangesAsync();
 
-            var booking = new Booking(ev.Id);
+            var booking = new Booking(u.Id, ev.Id);
             await repository.AddBookingAsync(booking, t.Token);
 
             // Act
@@ -114,12 +123,15 @@ namespace EventsAPI.IntegrationTests
             var repository = new BookingRepository(context);
             var ev = new Event("Title1", DateTime.Now.ToUniversalTime() - TimeSpan.FromDays(1), DateTime.Now.ToUniversalTime() + TimeSpan.FromDays(1), 10);
             context.Events.Add(ev);
+            var uRepository = new UserRepository(context);
+            var u = new User("User1234", "12345678");
+            context.Users.Add(u);
             await context.SaveChangesAsync();
 
-            var booking = new Booking(ev.Id);
+            var booking = new Booking(u.Id, ev.Id);
             await repository.AddBookingAsync(booking, t.Token);
 
-            var booking2 = new Booking(ev.Id);
+            var booking2 = new Booking(u.Id, ev.Id);
             await repository.AddBookingAsync(booking2, t.Token);
 
             // Act
@@ -145,12 +157,15 @@ namespace EventsAPI.IntegrationTests
             var repository = new BookingRepository(context);
             var ev = new Event("Title1", DateTime.Now.ToUniversalTime() - TimeSpan.FromDays(1), DateTime.Now.ToUniversalTime() + TimeSpan.FromDays(1), 10);
             context.Events.Add(ev);
+            var uRepository = new UserRepository(context);
+            var u = new User("User1234", "12345678");
+            context.Users.Add(u);
             await context.SaveChangesAsync();
 
-            var booking = new Booking(ev.Id);
+            var booking = new Booking(u.Id, ev.Id);
             await repository.AddBookingAsync(booking, t.Token);
 
-            var booking2 = new Booking(ev.Id);
+            var booking2 = new Booking(u.Id, ev.Id);
             await repository.AddBookingAsync(booking2, t.Token);
 
             booking.Confirm();

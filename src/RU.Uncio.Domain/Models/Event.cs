@@ -67,6 +67,10 @@
             AvailableSeats = TotalSeats;
         }
 
+        /// <summary>
+        /// Updates an event with new properties
+        /// </summary>
+        /// <param name="ev"></param>
         public void UpdateWith(Event ev)
         {
             Title = ev.Title;
@@ -77,6 +81,11 @@
             AvailableSeats = TotalSeats - Bookings.Count;
         }
 
+        /// <summary>
+        /// Tries to reserve a seat for the event if there are available seats yet
+        /// </summary>
+        /// <param name="count"></param>
+        /// <returns></returns>
         public bool TryReserveSeats(int count = 1)
         {
             if(AvailableSeats >= count)

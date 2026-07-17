@@ -6,6 +6,7 @@ using RU.Uncio.Application.Auxiliary;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using RU.Uncio.EventsAPI;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RU.Uncio.Presentation.Controllers
 {
@@ -16,6 +17,7 @@ namespace RU.Uncio.Presentation.Controllers
     /// <param name="logger"></param>
     [ApiController]
     [Route("[controller]")]
+    [Authorize]
     public class EventsController(IEventsService eventsService, ILogger<EventsController> logger) : ControllerBase
     {
         /// <summary>
@@ -26,6 +28,7 @@ namespace RU.Uncio.Presentation.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<ApiResult<PaginatedResultDTO<EventDTO>>>> GetEventsAsync(CancellationToken token,
                                                                     [FromQuery] string? title = null,
                                                                     [FromQuery] DateTime? from = null,
@@ -65,6 +68,7 @@ namespace RU.Uncio.Presentation.Controllers
         [ProducesResponseType(typeof(ApiBaseResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet("{id:Guid}")]
+        [AllowAnonymous]
         public async Task<ActionResult<ApiBaseResult>> GetEventById([FromRoute] Guid id, CancellationToken token)
         {
             var eventById = await eventsService.GetEventAsync(id, token);
@@ -103,6 +107,7 @@ namespace RU.Uncio.Presentation.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status201Created)]
         [Consumes("application/json")]
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApiResult>> CreateEvent([FromBody] EventDTO ev, CancellationToken token)
         {
             if (!ModelState.IsValid)
@@ -135,6 +140,7 @@ namespace RU.Uncio.Presentation.Controllers
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
         [Consumes("application/json")]
         [HttpPut("{id:Guid}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> UpdateEvent([FromRoute] Guid id, [FromBody] EventDTO ev, CancellationToken token)
         {
             if (!ModelState.IsValid)
@@ -159,6 +165,7 @@ namespace RU.Uncio.Presentation.Controllers
         /// and HTTP status-code 204 NoContent in case of success</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
         [HttpDelete("{id:Guid}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteEvent([FromRoute] Guid id, CancellationToken token)
         {
             await eventsService.RemoveEventAsync(id, token);

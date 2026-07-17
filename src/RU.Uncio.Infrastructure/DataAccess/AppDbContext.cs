@@ -13,12 +13,16 @@ namespace RU.Uncio.Infrastructure.DataAccess
         /// </summary>
         public DbSet<Event> Events => Set<Event>();
         /// <summary>
+        /// Users table
+        /// </summary>
+        public DbSet<User> Users => Set<User>();
+        /// <summary>
         /// Bookings table
         /// </summary>
         public DbSet<Booking> Bookings => Set<Booking>();
 
         /// <summary>
-        /// 
+        /// Users table
         /// </summary>
         /// <param name="opts"></param>
         public AppDbContext(DbContextOptions<AppDbContext> opts)

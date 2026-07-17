@@ -26,6 +26,10 @@ namespace RU.Uncio.Infrastructure.DataAccess.Configurations
             builder.HasOne(o => o.Event)
                    .WithMany(u => u.Bookings)
                    .HasForeignKey(o => o.EventId);
+
+            builder.HasOne(o => o.User)
+                   .WithMany(u => u.Bookings)
+                   .HasForeignKey(o => o.UserId);
         }
     }
 }

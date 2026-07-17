@@ -17,7 +17,8 @@ namespace RU.Uncio.Application.Services
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="context"></param>
+        /// <param name="log"></param>
+        /// <param name="repo"></param>
         public EventsService(ILogger<EventsService> log, IEventRepository repo)
         {
             logger = log;
@@ -27,6 +28,7 @@ namespace RU.Uncio.Application.Services
         /// <summary>
         /// Gets all events from collection
         /// </summary>
+        /// <param name="token">cancellation token</param>
         /// <param name="title">Title filter</param>
         /// <param name="from">Event starts from filter</param>
         /// <param name="to">Event ends up to filter</param>
@@ -81,6 +83,7 @@ namespace RU.Uncio.Application.Services
         /// Gets an event from collection by ID
         /// </summary>
         /// <param name="id">ID parameter of event</param>
+        /// <param name="token">cancellation token</param>
         /// <returns></returns>
         public async Task<Event> GetEventAsync(Guid id, CancellationToken token)
         {
@@ -97,6 +100,7 @@ namespace RU.Uncio.Application.Services
         /// Adds an event to collection
         /// </summary>
         /// <param name="ev">Event to add</param>
+        /// <param name="token">cancellation token</param>
         /// <exception cref="ArgumentException"></exception>
         public async Task AddEventAsync(Event ev, CancellationToken token)
         {
@@ -115,6 +119,7 @@ namespace RU.Uncio.Application.Services
         /// </summary>
         /// <param name="id">ID parameter of event</param>
         /// <param name="ev">Event to update</param>
+        /// <param name="token">cancellation token</param>
         /// <exception cref="IndexOutOfRangeException"></exception>
         public async Task UpdateEventAsync(Guid id, Event ev, CancellationToken token)
         {
@@ -142,6 +147,7 @@ namespace RU.Uncio.Application.Services
         /// Removes an event from collection by ID
         /// </summary>
         /// <param name="id">ID parameter of event</param>
+        /// <param name="token">cancellation token</param>
         /// <exception cref="IndexOutOfRangeException"></exception>
         public async Task RemoveEventAsync(Guid id, CancellationToken token)
         {

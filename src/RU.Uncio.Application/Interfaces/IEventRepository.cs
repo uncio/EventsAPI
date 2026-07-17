@@ -23,11 +23,13 @@ namespace RU.Uncio.Application.Interfaces
         /// Updates an event in collection by event ID
         /// </summary>
         /// <param name="ev">Event to update</param>
+        /// <param name="token">cancellation token</param>
         Task UpdateEventAsync(Event ev, CancellationToken token);
         /// <summary>
         /// Deletes an event from collection by event ID
         /// </summary>
         /// <param name="id"></param>
+        /// <param name="token">cancellation token</param>
         Task RemoveEventAsync(Guid id, CancellationToken token);
     }
 }
