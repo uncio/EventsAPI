@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using RU.Uncio.Application.Interfaces;
@@ -40,6 +41,7 @@ namespace EventsAPI.Tests
             users = new List<User>
                 {
                     new("User1234","12345678"),
+                    new("User4321","12345678"),
                     new("Admin123", "admin123", Roles.Admin)
                 };
 
@@ -550,6 +552,93 @@ namespace EventsAPI.Tests
             Assert.StartsWith(expectedExceptionMessage, exception.Message);
             Assert.Equal(user2.Id, newBooking.UserId);
             Assert.Single(user2.Bookings);
+        }
+
+        [Fact]
+        public async Task AdminCancellsAnyBooking_Succeeded()
+        {
+            //Arrange
+            var eventToBook = events.FirstOrDefault().Value;
+            var user = users.FirstOrDefault(u => u.Role != Roles.Admin)!;
+            var admin = users.FirstOrDefault(u => u.Role == Roles.Admin)!;
+            var bookingRepoMock = new Mock<IBookingRepository>();
+            var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object, eventsService, userService);
+            var initialBookings = new Dictionary<Guid, Booking>();
+
+            bookingRepoMock.Setup(method => method.GetBookingsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(initialBookings);
+            bookingRepoMock.Setup<Task<bool>>(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
+                .Callback<Booking, CancellationToken>((b, token)
+                => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
+            bookingRepoMock.Setup(method => method.UpdateBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
+                .Callback<Booking, CancellationToken>((booking, token) => booking.Cancell());
+
+            var newBooking = await bookingServiceToAdd.CreateBookingAsync(user.Id, eventToBook.Id, TestContext.Current.CancellationToken);
+            // Act
+
+            await bookingServiceToAdd.CancelBookingByIdAsync(admin.Id, newBooking.Id, TestContext.Current.CancellationToken);
+
+            // Assert
+            Assert.NotNull(newBooking);
+            Assert.Equal(BookingStatus.Cancelled, newBooking.Status);
+        }
+
+        [Fact]
+        public async Task UserCancellsOwnBooking_Succeeded()
+        {
+            //Arrange
+            var eventToBook = events.FirstOrDefault().Value;
+            var user = users.FirstOrDefault(u => u.Role != Roles.Admin)!;
+            var bookingRepoMock = new Mock<IBookingRepository>();
+            var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object, eventsService, userService);
+            var initialBookings = new Dictionary<Guid, Booking>();
+
+            bookingRepoMock.Setup(method => method.GetBookingsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(initialBookings);
+            bookingRepoMock.Setup<Task<bool>>(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
+                .Callback<Booking, CancellationToken>((b, token)
+                => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
+            bookingRepoMock.Setup(method => method.UpdateBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
+                .Callback<Booking, CancellationToken>((booking, token) => booking.Cancell());
+
+            var newBooking = await bookingServiceToAdd.CreateBookingAsync(user.Id, eventToBook.Id, TestContext.Current.CancellationToken);
+            // Act
+
+            await bookingServiceToAdd.CancelBookingByIdAsync(user.Id, newBooking.Id, TestContext.Current.CancellationToken);
+
+            // Assert
+            Assert.NotNull(newBooking);
+            Assert.Equal(BookingStatus.Cancelled, newBooking.Status);
+        }
+
+        [Fact]
+        public async Task UserCancellsSomeonesBooking_ThrowsNoRights()
+        {
+            //Arrange
+            var eventToBook = events.FirstOrDefault().Value;
+            var user = users.FirstOrDefault(u => u.Role != Roles.Admin)!;
+            var user2 = users.LastOrDefault(u => u.Role != Roles.Admin)!;
+
+            var bookingRepoMock = new Mock<IBookingRepository>();
+            var bookingServiceToAdd = new BookingService(bookingsLogger.Object, bookingRepoMock.Object, eventsService, userService);
+            var initialBookings = new Dictionary<Guid, Booking>();
+
+            bookingRepoMock.Setup(method => method.GetBookingsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(initialBookings);
+            bookingRepoMock.Setup<Task<bool>>(method => method.AddBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
+                .Callback<Booking, CancellationToken>((b, token)
+                => initialBookings.Add(b.Id, b)).ReturnsAsync(true);
+            bookingRepoMock.Setup(method => method.UpdateBookingAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
+                .Callback<Booking, CancellationToken>((booking, token) => booking.Cancell());
+
+            var newBooking = await bookingServiceToAdd.CreateBookingAsync(user2.Id, eventToBook.Id, TestContext.Current.CancellationToken);
+
+            var expectedExceptionMessage = $"User with ID {user.Id} can't cancell the booking with ID {newBooking.Id}";
+
+            // Act
+            var exception = await Assert
+                .ThrowsAsync<NoRightsException>(async () => await bookingServiceToAdd.CancelBookingByIdAsync(user.Id, newBooking.Id, TestContext.Current.CancellationToken));
+
+            // Assert
+            Assert.IsType<NoRightsException>(exception);
+            Assert.StartsWith(expectedExceptionMessage, exception.Message);
         }
     }
 }
