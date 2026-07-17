@@ -14,13 +14,14 @@ using System.Net;
 namespace RU.Uncio.Presentation.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("/")]
     public class UsersController(IUserService userService, ILogger<UsersController> logger) : ControllerBase
     {
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet]
         [Authorize(Roles = "Admin")]
+        [Route("/users")]
         public async Task<ActionResult<ApiResult<List<UserDTO>>>> GetUsersAsync(CancellationToken token)
         {
             var users = await userService.GetAllUsersAsync(token);
