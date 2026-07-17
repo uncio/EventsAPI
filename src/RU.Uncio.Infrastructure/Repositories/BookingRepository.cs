@@ -7,11 +7,15 @@ using System.Collections.Concurrent;
 namespace RU.Uncio.Infrastructure.Repositories
 {
     /// <summary>
-    /// Concrete in memory bookings repository
+    /// Concrete bookings repository
     /// </summary>
     public class BookingRepository : IBookingRepository
     {
         private readonly AppDbContext db;
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dB"></param>
         public BookingRepository(AppDbContext dB) { db = dB; }
 
         /// <summary>

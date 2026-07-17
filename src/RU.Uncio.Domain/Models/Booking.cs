@@ -16,7 +16,11 @@
         /// <summary>
         /// Booking rejected
         /// </summary>
-        Rejected
+        Rejected,
+        /// <summary>
+        /// Booking cancelled
+        /// </summary>
+        Cancelled
     }
     /// <summary>
     /// Booking model
@@ -27,6 +31,14 @@
         /// Booking ID
         /// </summary>
         public Guid Id { get; private set; }
+        /// <summary>
+        /// User
+        /// </summary>
+        public User? User { get; set; }
+        /// <summary>
+        /// User id
+        /// </summary>
+        public Guid UserId { get; set; }
         /// <summary>
         /// Booking event
         /// </summary>
@@ -53,14 +65,16 @@
         /// For serializer
         /// </summary>
         public Booking() { }
-  
+
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="userId"></param>
         /// <param name="eventId"></param>
-        public Booking(Guid eventId)
+        public Booking(Guid userId, Guid eventId)
         {
             Id = Guid.NewGuid();
+            UserId = userId;
             EventId = eventId;
             Status = BookingStatus.Pending;
             CreatedAt = DateTime.Now.ToUniversalTime();
@@ -81,6 +95,18 @@
         {
             Status = BookingStatus.Rejected;
             ProcessedAt = DateTime.Now.ToUniversalTime();
+        }
+
+        /// <summary>
+        /// Cancell status setter
+        /// </summary>
+        public void Cancell()
+        {
+            if (Status != BookingStatus.Cancelled)
+            {
+                Status = BookingStatus.Cancelled;
+                ProcessedAt = DateTime.Now.ToUniversalTime();
+            }
         }
     }
 }

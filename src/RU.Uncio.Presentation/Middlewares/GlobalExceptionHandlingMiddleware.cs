@@ -79,6 +79,12 @@ namespace RU.Uncio.EventsAPI.Middlewares
                 MissingEventException mee => StatusCodes.Status404NotFound,
                 TotalGreaterBookedException tgbe => StatusCodes.Status409Conflict,
                 NoAvailableSeatsException nase => StatusCodes.Status409Conflict,
+                EventExpiredException eee2 => StatusCodes.Status400BadRequest,
+                ExceededBookingLimitException eble => StatusCodes.Status409Conflict,
+                MissingBookingException mbe => StatusCodes.Status404NotFound,
+                MissingUserException mue => StatusCodes.Status404NotFound,
+                NoRightsException nre => StatusCodes.Status403Forbidden,
+
                 _ => StatusCodes.Status500InternalServerError
             };
 
@@ -90,6 +96,12 @@ namespace RU.Uncio.EventsAPI.Middlewares
                 MissingEventException mee => HttpStatusCode.NotFound,
                 TotalGreaterBookedException tgbe => HttpStatusCode.Conflict,
                 NoAvailableSeatsException nase => HttpStatusCode.Conflict,
+                EventExpiredException eee2 => HttpStatusCode.BadRequest,
+                ExceededBookingLimitException eble => HttpStatusCode.Conflict,
+                MissingBookingException mbe => HttpStatusCode.NotFound,
+                MissingUserException mue => HttpStatusCode.NotFound,
+                NoRightsException nre => HttpStatusCode.Forbidden,
+
                 _ => HttpStatusCode.InternalServerError
             };
     }

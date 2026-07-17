@@ -13,7 +13,9 @@ namespace EventsAPI.IntegrationTests;
 
 public class EventRepositoryTests : IAsyncLifetime
 {
+#pragma warning disable CS0618 // Type or member is obsolete
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
+#pragma warning restore CS0618 // Type or member is obsolete
         .WithImage("postgres:16-alpine")
         .Build();
 

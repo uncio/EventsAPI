@@ -17,23 +17,27 @@ namespace RU.Uncio.Application.Interfaces
         /// Gets an event from collection by ID
         /// </summary>
         /// <param name="id">ID parameter of event</param>
+        /// <param name="token">cancellation token</param>
         /// <returns>Event instance</returns>
         Task<Event> GetEventAsync(Guid id, CancellationToken token);
         /// <summary>
         /// Adds an event to collection
         /// </summary>
         /// <param name="ev">Event to add</param>
+        /// <param name="token">cancellation token</param>
         Task AddEventAsync(Event ev, CancellationToken token);
         /// <summary>
         /// Updates an event in collection by event ID
         /// </summary>
         /// <param name="id">ID parameter of event</param>
         /// <param name="ev">Event to update</param>
+        /// <param name="token">cancellation token</param>
         Task UpdateEventAsync(Guid id, Event ev, CancellationToken token);
         /// <summary>
         /// Deletes an event from collection by event ID
         /// </summary>
         /// <param name="id"></param>
+        /// <param name="token">cancellation token</param>
         Task RemoveEventAsync(Guid id, CancellationToken token);
         /// <summary>
         /// Returns paginated events

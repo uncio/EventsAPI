@@ -7,8 +7,17 @@ using RU.Uncio.Infrastructure.Repositories;
 
 namespace RU.Uncio.Infrastructure.Auxiliary
 {
+    /// <summary>
+    /// Infrastructure dependency injection
+    /// </summary>
     public static class DependencyInjection
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="configuration"></param>
+        /// <returns></returns>
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             // База данных
@@ -17,6 +26,7 @@ namespace RU.Uncio.Infrastructure.Auxiliary
 
             // Репозитории
             services.AddScoped<IEventRepository, EventRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IBookingRepository, BookingRepository>();
 
             return services;

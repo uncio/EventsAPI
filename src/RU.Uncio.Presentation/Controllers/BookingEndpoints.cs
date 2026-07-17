@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using RU.Uncio.Application.Auxiliary;
 using RU.Uncio.Application.DTO;
 using RU.Uncio.Application.Interfaces;
 using RU.Uncio.EventsAPI;
 using System.Net;
-using RU.Uncio.Application.Auxiliary;
+using System.Security.Claims;
 
 namespace RU.Uncio.Presentation.Controllers
 {
@@ -20,11 +22,24 @@ namespace RU.Uncio.Presentation.Controllers
         /// <returns></returns>
         public static IEndpointRouteBuilder MapBookingEndpoints(this IEndpointRouteBuilder endpoints, ILogger logger)
         {
-            endpoints.MapPost("Events/{id}/book", async ([FromRoute] Guid id, IBookingService service, CancellationToken token) =>
+            endpoints.MapPost("Events/{eventId}/book", [Authorize] async ([FromRoute] Guid eventId, IBookingService service, ClaimsPrincipal user, CancellationToken token) =>
             {
                 try
                 {
-                    var result = await service.CreateBookingAsync(id, token);
+                    var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+                    if (userIdClaim == null)
+                    {
+                        return Results.BadRequest(new ApiResult
+                        {
+                            Success = false,
+                            StatusCode = HttpStatusCode.BadRequest,
+                            Message = $"User identifier is not found"
+                        });
+                    }
+
+                    var userId = new Guid(userIdClaim.Value);
+
+                    var result = await service.CreateBookingAsync(userId, eventId, token);
 
                     if (result != null)
                     {
@@ -35,7 +50,7 @@ namespace RU.Uncio.Presentation.Controllers
                             Data = booking,
                             Success = true,
                             StatusCode = HttpStatusCode.Accepted,
-                            Message = $"Adding booking for event with ID {id} in collection"
+                            Message = $"Adding booking for event with ID {eventId} in collection"
                         });
                     }
                     else
@@ -44,7 +59,7 @@ namespace RU.Uncio.Presentation.Controllers
                         {
                             Success = false,
                             StatusCode = HttpStatusCode.BadRequest,
-                            Message = $"Event with ID {id} is not found in the collection"
+                            Message = $"Failed to create booking for user {userId} for event {eventId}"
                         });
                     }
                 }
@@ -55,7 +70,7 @@ namespace RU.Uncio.Presentation.Controllers
                 }
             });
 
-            endpoints.MapGet("/bookings/{id}", async ([FromRoute] Guid id, IBookingService service, CancellationToken token) =>
+            endpoints.MapGet("/bookings/{id}", [Authorize] async ([FromRoute] Guid id, IBookingService service, CancellationToken token) =>
             {
                 try
                 {
@@ -80,6 +95,33 @@ namespace RU.Uncio.Presentation.Controllers
                             Message = $"Booking with ID {id} is not found in the collection"
                         });
                     }
+                }
+                catch (OperationCanceledException)
+                {
+                    logger.LogWarning("Client Closed Request");
+                    return Results.StatusCode(499); //Client Closed Request
+                }
+            });
+
+            endpoints.MapDelete("/bookings/{id}", [Authorize] async ([FromRoute] Guid id, IBookingService service, ClaimsPrincipal user, CancellationToken token) =>
+            {
+                try
+                {
+                    var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier);
+                    if (userIdClaim == null)
+                    {
+                        return Results.BadRequest(new ApiResult
+                        {
+                            Success = false,
+                            StatusCode = HttpStatusCode.BadRequest,
+                            Message = $"User identifier is not found"
+                        });
+                    }
+
+                    var userId = new Guid(userIdClaim.Value);
+
+                    await service.CancelBookingByIdAsync(userId, id, token);
+                    return Results.NoContent();
                 }
                 catch (OperationCanceledException)
                 {
