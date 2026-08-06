@@ -1,0 +1,6 @@
+@RU.Uncio.BookingService_HostAddress = http://localhost:5291
+
+GET {{RU.Uncio.BookingService_HostAddress}}/
+Accept: application/json
+
+###

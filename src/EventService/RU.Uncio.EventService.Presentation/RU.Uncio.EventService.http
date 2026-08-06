@@ -1,0 +1,6 @@
+@RU.Uncio.EventService_HostAddress = http://localhost:5289
+
+GET {{RU.Uncio.EventService_HostAddress}}/
+Accept: application/json
+
+###

@@ -4,9 +4,9 @@
 # Данные сохраняются в именованном томе eventapi_pgdata
 
 services:
-  postgres:
+  pg1:
     image: postgres:16-alpine
-    container_name: eventapi-postgres
+    container_name: pg1
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -15,12 +15,50 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - eventapi_pgdata:/var/lib/postgresql/data
+      - pg1data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d eventapi"]
+      interval: 5s
+      timeout: 5s
+      retries: 5      
+      
+  pg2:
+    image: postgres:16-alpine
+    container_name: pg2
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: userapi
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg2data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d userapi"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pg3:
+    image: postgres:16-alpine
+    container_name: pg3
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bookingapi
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg3data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bookingapi"]
       interval: 5s
       timeout: 5s
       retries: 5
 
 volumes:
-  eventapi_pgdata:
+  pg1data:
+  pg2data:
+  pg3data:

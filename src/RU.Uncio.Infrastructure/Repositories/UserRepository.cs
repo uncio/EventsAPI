@@ -2,9 +2,6 @@
 using RU.Uncio.Application.Interfaces;
 using RU.Uncio.Domain.Models;
 using RU.Uncio.Infrastructure.DataAccess;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace RU.Uncio.Infrastructure.Repositories
 {

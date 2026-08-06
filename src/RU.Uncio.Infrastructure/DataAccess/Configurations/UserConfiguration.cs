@@ -1,9 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RU.Uncio.Domain.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace RU.Uncio.Infrastructure.DataAccess.Configurations
 {
