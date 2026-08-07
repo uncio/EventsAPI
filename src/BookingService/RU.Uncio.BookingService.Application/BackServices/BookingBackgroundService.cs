@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RU.Uncio.BookingService.Application.Interfaces;
@@ -13,7 +14,8 @@ namespace RU.Uncio.BookingService.Application.Backservices
     /// </remarks>
     /// <param name="scFactory"></param>
     /// <param name="log"></param>
-    public class BookingBackgroundService(IServiceScopeFactory scFactory, ILogger<BookingBackgroundService> log) : BackgroundService
+    public class BookingBackgroundService(IServiceScopeFactory scFactory,
+                                          ILogger<BookingBackgroundService> log) : BackgroundService
     {
         private readonly ILogger<BookingBackgroundService> logger = log;
         private readonly IServiceScopeFactory scopeFactory = scFactory;

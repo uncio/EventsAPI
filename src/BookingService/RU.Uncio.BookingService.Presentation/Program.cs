@@ -9,6 +9,7 @@ using RU.Uncio.BookingService.Application.Auxiliary;
 using RU.Uncio.BookingService.Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using RU.Uncio.BookingService.Presentation.Controllers;
+using RU.Uncio.BookingService.Application.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 

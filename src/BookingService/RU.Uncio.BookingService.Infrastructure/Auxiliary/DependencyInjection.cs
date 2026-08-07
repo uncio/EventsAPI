@@ -27,7 +27,7 @@ namespace RU.Uncio.BookingService.Infrastructure.Auxiliary
 
             // Репозитории
             services.AddScoped<IBookingRepository, BookingRepository>();
-            services.AddScoped<IBookingProducer, BookingProducer>();
+            services.AddSingleton<IBookingProducer, BookingProducer>();
 
             return services;
         }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RU.Uncio.EventService.Application.Interfaces;
 using RU.Uncio.EventService.Infrastructure.DataAccess;
+using RU.Uncio.EventsService.Infrastructure;
 using RU.Uncio.Infrastructure.Repositories;
 using System.Collections.ObjectModel;
 
@@ -27,7 +28,9 @@ namespace RU.Uncio.EventService.Infrastructure.Auxiliary
 
             // Репозитории
             services.AddScoped<IEventRepository, EventRepository>();
- 
+            services.AddHostedService<BookingConsumer>();
+            services.AddHostedService<TopicCreatorService>();
+
             return services;
         }
     }

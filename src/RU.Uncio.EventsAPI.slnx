@@ -14,31 +14,11 @@
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
-  <Folder Name="/Tests/">
-    <Project Path="EventsAPI.IntegrationTests/EventsAPI.IntegrationTests.csproj">
-      <Build Solution="Debug|*" Project="false" />
-    </Project>
-    <Project Path="EventsAPI.Tests/EventsAPI.Tests.csproj" Id="c4accd7f-9b8e-4281-8920-ab828cd802fd">
-      <Build Solution="Debug|*" Project="false" />
-    </Project>
-  </Folder>
   <Folder Name="/UserService/">
     <Project Path="UserService/RU.Uncio.UserService.Application/RU.Uncio.UserService.Application.csproj" Id="4b623c91-a9f8-4829-a859-8ddb5b752d9b" />
     <Project Path="UserService/RU.Uncio.UserService.Domain/RU.Uncio.UserService.Domain.csproj" Id="28a03b34-72e4-4c8f-b045-a69f61730847" />
     <Project Path="UserService/RU.Uncio.UserService.Infrastructure/RU.Uncio.UserService.Infrastructure.csproj" Id="58460bee-8d18-439d-b308-f9a63a0e7c0f" />
     <Project Path="UserService/RU.Uncio.UserService.Presentation/RU.Uncio.UserService.Presentation.csproj" Id="81c4e68f-554a-4258-8beb-07f3b0645839" />
   </Folder>
-  <Project Path="RU.Uncio.Application/RU.Uncio.Application.csproj" Id="dd737773-2d3d-4ed5-8252-9b2f7dc8de0e">
-    <Build Solution="Debug|*" Project="false" />
-  </Project>
   <Project Path="RU.Uncio.Contracts/RU.Uncio.Contracts.csproj" Id="92839d36-a839-47a9-ac2b-fc6d021cdb1e" />
-  <Project Path="RU.Uncio.Domain/RU.Uncio.Domain.csproj" Id="f2e60a7e-3910-4e8b-98af-f3052499f729">
-    <Build Solution="Debug|*" Project="false" />
-  </Project>
-  <Project Path="RU.Uncio.Infrastructure/RU.Uncio.Infrastructure.csproj" Id="c9677688-bd32-4645-aa6b-fa156bb7233c">
-    <Build Solution="Debug|*" Project="false" />
-  </Project>
-  <Project Path="RU.Uncio.Presentation/RU.Uncio.Presentation.csproj">
-    <Build Solution="Debug|*" Project="false" />
-  </Project>
 </Solution>

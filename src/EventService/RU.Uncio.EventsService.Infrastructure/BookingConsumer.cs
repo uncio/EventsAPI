@@ -1,4 +1,5 @@
 ﻿using Confluent.Kafka;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -13,11 +14,14 @@ using System.Text.Json;
 
 namespace RU.Uncio.EventsService.Infrastructure
 {
-    public class BookingConsumer(IServiceScopeFactory scFactory, ILogger<BookingConsumer> log) : BackgroundService
+    public class BookingConsumer(IServiceScopeFactory scFactory,
+                                 ILogger<BookingConsumer> log,
+                                 IConfiguration config) : BackgroundService
     {
 
         private readonly ILogger<BookingConsumer> logger = log;
         private readonly IServiceScopeFactory scopeFactory = scFactory;
+        private readonly IConfiguration configuration = config;
         private static readonly SemaphoreSlim processingSemaphore = new(1, 1);
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -30,17 +34,19 @@ namespace RU.Uncio.EventsService.Infrastructure
         {
             var config = new ConsumerConfig
             {
-                BootstrapServers = "localhost:9092",
-                GroupId = "order-processing",
+                BootstrapServers = configuration["Kafka:BootstrapServers"],
+                GroupId = "booking-processing",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
                 EnableAutoOffsetStore = false,
                 EnableAutoCommit = false
             };
 
             using var consumer = new ConsumerBuilder<string, string>(config).Build();
-            consumer.Subscribe("orders");
+            consumer.Subscribe(Constants.TOPIC);
 
-            logger.LogInformation("Consumer запущен. Ожидание сообщений из топика 'orders'...");
+            logger.LogInformation("Consumer запущен. Ожидание сообщений из топика 'booking-confirmed'...");
+
+            await processingSemaphore.WaitAsync(stoppingToken);
 
             try
             {
@@ -88,6 +94,7 @@ namespace RU.Uncio.EventsService.Infrastructure
             }
             finally
             {
+                processingSemaphore.Release();            
                 consumer.Close();
             }
         }

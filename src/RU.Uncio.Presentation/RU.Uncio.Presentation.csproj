@@ -24,8 +24,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RU.Uncio.Application\RU.Uncio.Application.csproj" />
-    <ProjectReference Include="..\RU.Uncio.Domain\RU.Uncio.Domain.csproj" />
-    <ProjectReference Include="..\RU.Uncio.Infrastructure\RU.Uncio.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
