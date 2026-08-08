@@ -12,11 +12,21 @@ using System.Text;
 
 namespace RU.Uncio.EventsService.Infrastructure
 {
+    /// <summary>
+    /// topic creator
+    /// </summary>
+    /// <param name="config"></param>
+    /// <param name="log"></param>
     public class TopicCreatorService(IConfiguration config, ILogger<TopicCreatorService> log) : IHostedService
     {
         private readonly IConfiguration configuration = config;
         private readonly ILogger<TopicCreatorService> logger = log;
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public Task StartAsync(CancellationToken cancellationToken)
         {
             CreateTopicIfNotExists(Constants.TOPIC, 1, 1);
@@ -52,7 +62,11 @@ namespace RU.Uncio.EventsService.Infrastructure
                 }
             }
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         public Task StopAsync(CancellationToken cancellationToken)
         {
             return Task.CompletedTask;

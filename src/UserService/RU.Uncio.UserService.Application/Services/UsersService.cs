@@ -17,7 +17,9 @@ namespace RU.Uncio.UserService.Application.Services
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="context"></param>
+        /// <param name="log"></param>
+        /// <param name="repo"></param>
+        /// <param name="auth"></param>
         public UsersService(ILogger<UsersService> log, IUserRepository repo, IAuthService auth)
         {
             logger = log;

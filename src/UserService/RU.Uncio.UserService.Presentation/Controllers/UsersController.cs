@@ -10,10 +10,20 @@ using RU.Uncio.UserService.Domain.Models;
 
 namespace RU.Uncio.UserService.Presentation.Controllers
 {
+    /// <summary>
+    /// Users controller
+    /// </summary>
+    /// <param name="userService"></param>
+    /// <param name="logger"></param>
     [ApiController]
-    [Route("/")]
+    [Route("/")]    
     public class UsersController(IUserService userService, ILogger<UsersController> logger) : ControllerBase
     {
+        /// <summary>
+        /// Returns all users
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet]
@@ -34,6 +44,13 @@ namespace RU.Uncio.UserService.Presentation.Controllers
             });
         }
 
+        /// <summary>
+        /// Creates user
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        /// <exception cref="ValidationException"></exception>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status201Created)]
         [Consumes("application/json")]
         [HttpPost, Route("auth/register")]
@@ -59,6 +76,12 @@ namespace RU.Uncio.UserService.Presentation.Controllers
             });
         }
 
+        /// <summary>
+        /// Authentication
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
         [ProducesResponseType(typeof(ApiBaseResult), StatusCodes.Status200OK)]
         [HttpPost, Route("auth/login")]
         public async Task<ActionResult<ApiBaseResult>> Login([FromBody] LoginRequest request, CancellationToken token)

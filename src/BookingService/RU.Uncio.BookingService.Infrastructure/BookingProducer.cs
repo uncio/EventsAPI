@@ -12,15 +12,30 @@ using System.Text.Json;
 
 namespace RU.Uncio.BookingService.Infrastructure
 {
+    /// <summary>
+    /// Message publisher for booking confirmation
+    /// </summary>
+    /// <param name="config"></param>
     public class BookingProducer(IConfiguration config) : IBookingProducer, IDisposable
     {
         private readonly IConfiguration configuration = config;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public void Dispose()
         {
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="bookingId"></param>
+        /// <param name="eventId"></param>
+        /// <param name="userId"></param>
+        /// <param name="seatsToBook"></param>
+        /// <returns></returns>
         public async Task PublishBooking(Guid bookingId, Guid eventId, Guid userId, int seatsToBook = 1)
         {
             var orderCreated = new BookingConfirmed

@@ -14,6 +14,12 @@ using System.Text.Json;
 
 namespace RU.Uncio.EventsService.Infrastructure
 {
+    /// <summary>
+    /// background service to consume booking confirmation
+    /// </summary>
+    /// <param name="scFactory"></param>
+    /// <param name="log"></param>
+    /// <param name="config"></param>
     public class BookingConsumer(IServiceScopeFactory scFactory,
                                  ILogger<BookingConsumer> log,
                                  IConfiguration config) : BackgroundService
@@ -24,6 +30,11 @@ namespace RU.Uncio.EventsService.Infrastructure
         private readonly IConfiguration configuration = config;
         private static readonly SemaphoreSlim processingSemaphore = new(1, 1);
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="stoppingToken"></param>
+        /// <returns></returns>
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             // Task.Run нужен, чтобы Consume (блокирующий вызов) не блокировал хост при старте
