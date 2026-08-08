@@ -1,31 +1,41 @@
-# Events API application
+# Events API приложение
 
-This is a bare-bones example of an application providing a REST
-API to a DataMapper-backed model.
+Это упрощенный пример распределенного многосервисного приложения, предоставляющего REST API для модели, использующей DataMapper.
 
-## "Install"
+# Сервисы
 
-    cd EventsAPI\src\RU.Uncio.Presentation
+UserService - сервис, предоставляющий доступ для управления пользователями
+EventService - сервис, предоставляющий доступ для управления событиями
+BookingService - сервис, предоставляющий доступ к функциям бронирования событий
 
-## Build the app
+# Межсервисное общение
+
+Межсервисное общение происходит на основе системы логирования событий Apache Kafka
+
+## UserService
+	
+## Установка
+
+    cd EventsAPI\src\UserService\RU.Uncio.UserService.Presentation
+
+## Сборка сервиса
 
     dotnet build
 	
-## Run the app  (https://localhost:7134)
+## Запуск сервиса  (https://localhost:7134)
 
     dotnet run --launch-profile https
 	
-## Run the app within Swagger (https://localhost:7134/swagger/index.html)
+## Запуск приложения через Swagger (https://localhost:7134/swagger/index.html)
 
     dotnet run --launch-profile sw_https
 	
-## Run unit tests
+## Запуск unit tests
 	cd ..	
     dotnet test	
 	
-## Migrations
-	dotnet ef migrations add InitialCreate --startup-project ../RU.Uncio.Presentation --project RU.Uncio.Infrastructure
-	dotnet ef migrations add Users --startup-project ../RU.Uncio.Presentation --project RU.Uncio.Infrastructure
+## Миграции
+	dotnet ef migrations add InitialMigration --startup-project ../RU.Uncio.UserService.Presentation --project RU.Uncio.UserService.Infrastructure
 
 ## Структура проекта
 
@@ -63,258 +73,33 @@ API to a DataMapper-backed model.
 │   └── controllers/
 └── Program
 
-## RBAC — Role-Based Access Control
+## RBAC — контроль доступа на основе ролей
 
-**Roles:**
-*   User: common user with limited rights
-*   Admin: user with extended rights
+**Роли:**
+*   Anonimous: анонимный неаутентифицированный пользователь с ограниченными правами доступа
+*   User: общий пользователь с ограниченными правами доступа
+*   Admin: пользователь с расширенными правами доступа
 
-**Rights:**
-*   Anonimous: register user (user role by default), login, list all events, det exact event info
-*   User: same as Anonimous plus book event, get event booking
-*   Admin: same as Anonimous and User plus list all users, create event, update event, delete event, cancel event booking
+**Права доступа:**
+*   Anonimous: регистрация нового пользователя (по умолчанию роль нового пользователя User), аутентификация
+*   User: аналогично Anonimous
+*   Admin: аналогично Anonimous и User плюс листинг всех пользователей
 
-## Swagger - getting token
+## Swagger - получение токена аутентификации
 * Login endpoint - POST /User/auth/login
-* Copy token to Swagger Authorize button
+* Скопируйте токен в кнопку Authorize Swagger
 
-## Secret keeping
-* Developement - secret is being kept in Configuration
-* Production - move secret to Environment variables or other safe secrets manager
+## Хранение секрета
+* Developement - секрет хранится в файле конфигурации
+* Production - переместите секрет в параметры окружения или другое безопасное место хранения секретов
 
 # REST API
 
-The REST API to the app is described below.
+REST API сервиса описано ниже.
 
-## Get list of Events (paginated by default: Page number = 1, PageSize = 10)
+## Получение списка пользователей (Users)
 
-### Request
-
-`GET /events/`
-
-curl -X 'GET' \
-  'https://localhost:7134/Events?page=1&pageSize=10' \
-  -H 'accept: application/json'
-
-### Response
-{
-  "data": {
-    "items": [],
-    "currentItems": 0,
-    "currentPage": 1,
-    "totalPages": 0,
-    "totalItems": 0
-  },
-  "success": true,
-  "statusCode": 200,
-  "dateTime": "2026-04-15T13:58:48.935942Z",
-  "message": "Gettin paginated events from collection"
-}
-
-## Get filtered list of Events (custom paginated: Page number = 2, PageSize = 5)
-
-### Request
-
-`GET /events/`
-
-curl -X 'GET' \
-  'https://localhost:7134/Events?title=Test&from=2026.01.12&to=2026.01.24&page=2&pageSize=5' \
-  -H 'accept: application/json'
-
-### Response
-{
-  "data": {
-    "items": [],
-    "currentItems": 0,
-    "currentPage": 2,
-    "totalPages": 0,
-    "totalItems": 0
-  },
-  "success": true,
-  "statusCode": 200,
-  "dateTime": "2026-04-15T14:01:04.273336Z",
-  "message": "Gettin paginated events from collection"
-}
-
-## Get a specific Event
-
-### Request
-
-`GET /events/id`
-
-    curl -X 'GET' \
-		'https://localhost:7134/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
-		-H 'accept: application/json'
-
-### Response
-	Result JSON-schema
-	{
-	  "success": true,
-	  "statusCode": 200,
-	  "dateTime": "2026-03-31T11:54:40.113Z",
-	  "message": "string"
-	}
-	
-## Create a new Event
-
-### Request
-
-`POST /events/`
-
-    curl -X 'POST' \
-		  'https://localhost:7134/Events' \
-		  -H 'accept: text/plain' \
-		  -H 'Content-Type: application/json' \
-		  -d '{
-		  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-		  "title": "string",
-		  "description": "string",
-		  "startAt": "2026-02-15T12:03:22.941Z",
-		  "endAt": "2026-03-31T12:03:22.941Z",
-		  "totalSeats": 12
-		}'
-
-### Response
-
-	Result JSON-schema
-	{
-	  "success": true,
-	  "statusCode": 201,
-	  "dateTime": "2026-03-31T11:54:40.113Z",
-	  "message": "string"
-	}
-
-## Replace an event
-
-### Request
-
-`PUT /events/id`
-
-    curl -X 'PUT' \
-	  'https://localhost:7134/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
-	  -H 'accept: text/plain' \
-	  -H 'Content-Type: application/json' \
-	  -d '{
-	  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-	  "title": "Test",
-	  "description": "Test1",
-	  "startAt": "2026-03-31T12:08:36.425Z",
-	  "endAt": "2026-04-30T12:08:36.425Z",
-		  "totalSeats": 12
-		}'
-
-### Response
-
-	Result JSON-schema
-	{
-	  "success": true,
-	  "statusCode": 204,
-	  "dateTime": "2026-03-31T11:54:40.113Z",
-	  "message": "string"
-	}
-
-## Delete an event
-
-### Request
-
-`DELETE /events/id`
-
-    curl -X 'DELETE' \
-	  'https://localhost:7134/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
-	  -H 'accept: text/plain'
-
-### Response
-
-	Result JSON-schema
-	{
-	  "success": true,
-	  "statusCode": 204,
-	  "dateTime": "2026-03-31T11:54:40.113Z",
-	  "message": "string"
-	}
-	
-## Book an event
-
-### Request
-
-`POST /events/id/book`
-
-curl -X 'POST' \
-  'https://localhost:7134/Events/14c43653-3a34-4faf-b0c4-068928adbe21/book' \
-  -H 'accept: */*' \
-  -H 'Authorization: Bearer <token>' \
-  -d ''
-
-### Response
-
-Result JSON-schema
-{
-  "data": {
-    "id": "4828c27c-adcd-4c32-8336-3499a9961449",
-    "eventId": "34ad8b51-a6bb-4a9f-8b2e-e5fd07bc855b",
-    "status": "Pending",
-    "createdAt": "2026-04-27T20:41:28.5650768+03:00",
-    "processedAt": null
-  },
-  "success": true,
-  "statusCode": 202,
-  "dateTime": "2026-04-27T17:41:28.5690582Z",
-  "message": "Adding booking for event with ID 34ad8b51-a6bb-4a9f-8b2e-e5fd07bc855b in collection"
-}
-	
-## Check an event booking status
-
-### Request
-
-`GET /bookings/id`
-
-curl -X 'GET' \
-  'https://localhost:7134/bookings/4828c27c-adcd-4c32-8336-3499a9961449' \
-  -H 'accept: */*' \
-  -H 'Authorization: Bearer <token>'
-
-### Response
-
-	Result JSON-schema
-{
-  "data": {
-    "id": "4828c27c-adcd-4c32-8336-3499a9961449",
-    "eventId": "34ad8b51-a6bb-4a9f-8b2e-e5fd07bc855b",
-    "status": "Confirmed",
-    "createdAt": "2026-04-27T20:41:28.5650768+03:00",
-    "processedAt": "2026-04-27T20:41:33.5845099+03:00"
-  },
-  "success": true,
-  "statusCode": 200,
-  "dateTime": "2026-04-27T17:43:30.5176803Z",
-  "message": "Getting booking with ID 4828c27c-adcd-4c32-8336-3499a9961449 from collection"
-}	
-
-## Cancel an event booking
-
-### Request
-
-`DELETE /bookings/id`
-
-curl -X 'DELETE' \
-  'https://localhost:7134/bookings/4c63ead7-86d7-481e-b827-aeb5a52ef74d' \
-  -H 'accept: */*' \
-  -H 'Authorization: Bearer <token>'
-
-### Response
-
-	Result JSON-schema
-	{
-	  "success": true,
-	  "statusCode": 204,
-	  "dateTime": "2026-03-31T11:54:40.113Z",
-	  "message": "string"
-	}
-
-
-## Get list of Users
-
-### Request
+### Запрос
 
 `GET /users/`
 
@@ -323,7 +108,7 @@ curl -X 'GET' \
   -H 'accept: application/json' \
   -H 'Authorization: Bearer <token>'
 
-### Response
+### Ответ
 {
   "data": [
     {
@@ -347,9 +132,9 @@ curl -X 'GET' \
   "message": "Getting all users from DB"
 }
 
-## Create a new user
+## Создание нового пользователя
 
-### Request
+### Запрос
 
 `POST /Users/auth/register`
 
@@ -366,7 +151,7 @@ curl -X 'POST' \
   "role": 0
 }'
 
-### Response
+### Ответ
 
 {
   "data": {
@@ -382,9 +167,9 @@ curl -X 'POST' \
   "message": "User NewUser : NewUser123 added to DB"
 }
 
-## Login
+## Ауиентификация
 
-### Request
+### Запрос
 
 `POST /Users/auth/login`
 
@@ -399,7 +184,7 @@ curl -X 'POST' \
   "twoFactorRecoveryCode": "string"
 }'
 
-### Response
+### Ответ
 
 {
   "data": "<token>",
@@ -408,3 +193,410 @@ curl -X 'POST' \
   "dateTime": "2026-07-17T12:03:17.8398013Z",
   "message": "User Token"
 }
+
+## EventService
+
+## Установка
+
+    cd EventsAPI\src\EventService\RU.Uncio.EventService.Presentation
+
+## Сборка сервиса
+
+    dotnet build
+	
+## Запуск сервиса  (https://localhost:7134)
+
+    dotnet run --launch-profile https
+	
+## Запуск сервиса через Swagger (https://localhost:7134/swagger/index.html)
+
+    dotnet run --launch-profile sw_https
+	
+## Запуск unit tests
+	cd ..	
+    dotnet test	
+	
+## Миграции
+	dotnet ef migrations add InitialMigration --startup-project ../RU.Uncio.EventService.Presentation --project RU.Uncio.EventService.Infrastructure
+
+## Структура проекта
+
+**Слои архитектуры:**
+*   Domain: сущности и модели данных
+*   Application: реализация сервисов и DTO, маппинг объектов
+*   Infrastructure: реализации репозиториев, DbContext
+*   Presentation: реализация контроллеров и эндпойнтов, глобальный обработчик ошибок.
+
+**Диаграмма слоёв:**
+    Presentation --> Infrastructure --> Domain: Хранение и Обработка данных
+    Presentation --> Application --> Domain: обработка бизнес-случаев
+
+**Слои по папкам:**
+
+├── domain/
+│   ├── exceptions/
+│   └── models/
+├── application/
+│   ├── auxiliary/
+│   ├── backservices/
+│   ├── dto/
+│   ├── interfaces/
+│   └── services/
+├── utils/
+│   ├── auxiliary/
+│   ├── dataaccess/
+│   │   ├── configurations/
+│   │   └── AppDbContext
+│   ├──  migrations/
+│   └── repositories/
+├── presentation/
+│   ├── auxiliary/
+│   ├── middlewares/
+│   └── controllers/
+└── Program
+
+## RBAC — контроль доступа на основе ролей
+
+**Роли:**
+*   Anonimous: анонимный неаутентифицированный пользователь с ограниченными правами доступа
+*   User: общий пользователь с ограниченными правами доступа
+*   Admin: пользователь с расширенными правами доступа
+
+**Права доступа:**
+*   Anonimous: листинг всех событий, получение подробных данных о конкретном событии
+*   User: аналогично Anonimous
+*   Admin: аналогично Anonimous и User плюс создание/обновление/удаление событий
+
+## Swagger - получение токена аутентификации
+* Login endpoint - POST /User/auth/login
+* Скопируйте токен в кнопку Authorize Swagger
+
+## Хранение секрета
+* Developement - секрет хранится в файле конфигурации
+* Production - переместите секрет в параметры окружения или другое безопасное место хранения секретов
+
+# REST API
+
+REST API сервиса описан ниже.
+
+## Получение списка всех событий (Events, пагинация по умолчанию : Page number = 1, PageSize = 10)
+
+### Запрос
+
+`GET /events/`
+
+curl -X 'GET' \
+  'https://localhost:7134/Events?page=1&pageSize=10' \
+  -H 'accept: application/json'
+
+### Ответ
+{
+  "data": {
+    "items": [],
+    "currentItems": 0,
+    "currentPage": 1,
+    "totalPages": 0,
+    "totalItems": 0
+  },
+  "success": true,
+  "statusCode": 200,
+  "dateTime": "2026-04-15T13:58:48.935942Z",
+  "message": "Gettin paginated events from collection"
+}
+
+## Get filtered list of Events (custom paginated: Page number = 2, PageSize = 5)
+
+### Запрос
+
+`GET /events/`
+
+curl -X 'GET' \
+  'https://localhost:7134/Events?title=Test&from=2026.01.12&to=2026.01.24&page=2&pageSize=5' \
+  -H 'accept: application/json'
+
+### Ответ
+{
+  "data": {
+    "items": [],
+    "currentItems": 0,
+    "currentPage": 2,
+    "totalPages": 0,
+    "totalItems": 0
+  },
+  "success": true,
+  "statusCode": 200,
+  "dateTime": "2026-04-15T14:01:04.273336Z",
+  "message": "Gettin paginated events from collection"
+}
+
+## Get a specific Event
+
+### Запрос
+
+`GET /events/id`
+
+    curl -X 'GET' \
+		'https://localhost:7134/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
+		-H 'accept: application/json'
+
+### Ответ
+	Result JSON-schema
+	{
+	  "success": true,
+	  "statusCode": 200,
+	  "dateTime": "2026-03-31T11:54:40.113Z",
+	  "message": "string"
+	}
+	
+## Create a new Event
+
+### Запрос
+
+`POST /events/`
+
+    curl -X 'POST' \
+		  'https://localhost:7134/Events' \
+		  -H 'accept: text/plain' \
+		  -H 'Content-Type: application/json' \
+		  -d '{
+		  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+		  "title": "string",
+		  "description": "string",
+		  "startAt": "2026-02-15T12:03:22.941Z",
+		  "endAt": "2026-03-31T12:03:22.941Z",
+		  "totalSeats": 12
+		}'
+
+### Ответ
+
+	Result JSON-schema
+	{
+	  "success": true,
+	  "statusCode": 201,
+	  "dateTime": "2026-03-31T11:54:40.113Z",
+	  "message": "string"
+	}
+
+## Replace an event
+
+### Запрос
+
+`PUT /events/id`
+
+    curl -X 'PUT' \
+	  'https://localhost:7134/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
+	  -H 'accept: text/plain' \
+	  -H 'Content-Type: application/json' \
+	  -d '{
+	  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+	  "title": "Test",
+	  "description": "Test1",
+	  "startAt": "2026-03-31T12:08:36.425Z",
+	  "endAt": "2026-04-30T12:08:36.425Z",
+		  "totalSeats": 12
+		}'
+
+### Ответ
+
+	Result JSON-schema
+	{
+	  "success": true,
+	  "statusCode": 204,
+	  "dateTime": "2026-03-31T11:54:40.113Z",
+	  "message": "string"
+	}
+
+## Delete an event
+
+### Запрос
+
+`DELETE /events/id`
+
+    curl -X 'DELETE' \
+	  'https://localhost:7134/Events/3fa85f64-5717-4562-b3fc-2c963f66afa6' \
+	  -H 'accept: text/plain'
+
+### Ответ
+
+	Result JSON-schema
+	{
+	  "success": true,
+	  "statusCode": 204,
+	  "dateTime": "2026-03-31T11:54:40.113Z",
+	  "message": "string"
+	}
+
+## BookingService
+
+## Установка
+
+    cd EventsAPI\src\BookingService\RU.Uncio.BookingService.Presentation
+
+## Сборка сервиса
+
+    dotnet build
+	
+## Запуск сервиса  (https://localhost:7134)
+
+    dotnet run --launch-profile https
+	
+## Запуск сервиса через Swagger (https://localhost:7134/swagger/index.html)
+
+    dotnet run --launch-profile sw_https
+	
+## Запуск unit tests
+	cd ..	
+    dotnet test	
+	
+## Миграции
+	dotnet ef migrations add InitialMigration --startup-project ../RU.Uncio.BookingService.Presentation --project RU.Uncio.BookingService.Infrastructure
+
+## Структура проекта
+
+**Слои архитектуры:**
+*   Domain: сущности и модели данных
+*   Application: реализация сервисов и DTO, маппинг объектов
+*   Infrastructure: реализации репозиториев, DbContext
+*   Presentation: реализация контроллеров и эндпойнтов, глобальный обработчик ошибок.
+
+**Диаграмма слоёв:**
+    Presentation --> Infrastructure --> Domain: Хранение и Обработка данных
+    Presentation --> Application --> Domain: обработка бизнес-случаев
+
+**Слои по папкам:**
+
+├── domain/
+│   ├── exceptions/
+│   └── models/
+├── application/
+│   ├── auxiliary/
+│   ├── backservices/
+│   ├── dto/
+│   ├── interfaces/
+│   └── services/
+├── utils/
+│   ├── auxiliary/
+│   ├── dataaccess/
+│   │   ├── configurations/
+│   │   └── AppDbContext
+│   ├──  migrations/
+│   └── repositories/
+├── presentation/
+│   ├── auxiliary/
+│   ├── middlewares/
+│   └── controllers/
+└── Program
+
+## RBAC — контроль доступа на основе ролей
+
+**Роли:**
+*   Anonimous: анонимный неаутентифицированный пользователь с ограниченными правами доступа
+*   User: общий пользователь с ограниченными правами доступа
+*   Admin: пользователь с расширенными правами доступа
+
+**Права доступа:**
+*   Anonimous: нет прав доступа
+*   User: бронирование событий, получение собственных бронирований, отмена собственного бронирования
+*   Admin: аналогично Anonimous и User плюс отмена любого бронирования
+
+## Swagger - получение токена аутентификации
+* Login endpoint - POST /User/auth/login
+* Скопируйте токен в кнопку Authorize Swagger
+
+## Хранение секрета
+* Developement - секрет хранится в файле конфигурации
+* Production - переместите секрет в параметры окружения или другое безопасное место хранения секретов
+
+# REST API
+
+REST API сервиса описан ниже.
+
+## Бронирование события
+
+### Запрос
+
+`POST /events/id/book`
+
+curl -X 'POST' \
+  'https://localhost:7134/Events/14c43653-3a34-4faf-b0c4-068928adbe21/book' \
+  -H 'accept: */*' \
+  -H 'Authorization: Bearer <token>' \
+  -d ''
+
+### Ответ
+
+Result JSON-schema
+{
+  "data": {
+    "id": "4828c27c-adcd-4c32-8336-3499a9961449",
+    "eventId": "34ad8b51-a6bb-4a9f-8b2e-e5fd07bc855b",
+    "status": "Pending",
+    "createdAt": "2026-04-27T20:41:28.5650768+03:00",
+    "processedAt": null
+  },
+  "success": true,
+  "statusCode": 202,
+  "dateTime": "2026-04-27T17:41:28.5690582Z",
+  "message": "Adding booking for event with ID 34ad8b51-a6bb-4a9f-8b2e-e5fd07bc855b in collection"
+}
+	
+## Получение бронирования
+
+### Запрос
+
+`GET /bookings/id`
+
+curl -X 'GET' \
+  'https://localhost:7134/bookings/4828c27c-adcd-4c32-8336-3499a9961449' \
+  -H 'accept: */*' \
+  -H 'Authorization: Bearer <token>'
+
+### Ответ
+
+	Result JSON-schema
+{
+  "data": {
+    "id": "4828c27c-adcd-4c32-8336-3499a9961449",
+    "eventId": "34ad8b51-a6bb-4a9f-8b2e-e5fd07bc855b",
+    "status": "Confirmed",
+    "createdAt": "2026-04-27T20:41:28.5650768+03:00",
+    "processedAt": "2026-04-27T20:41:33.5845099+03:00"
+  },*
+  "success": true,
+  "statusCode": 200,
+  "dateTime": "2026-04-27T17:43:30.5176803Z",
+  "message": "Getting booking with ID 4828c27c-adcd-4c32-8336-3499a9961449 from collection"
+}	
+
+## Отмена бронирования
+
+### Запрос
+
+`DELETE /bookings/id`
+
+curl -X 'DELETE' \
+  'https://localhost:7134/bookings/4c63ead7-86d7-481e-b827-aeb5a52ef74d' \
+  -H 'accept: */*' \
+  -H 'Authorization: Bearer <token>'
+
+### Ответ
+
+	Result JSON-schema
+	{
+	  "success": true,
+	  "statusCode": 204,
+	  "dateTime": "2026-03-31T11:54:40.113Z",
+	  "message": "string"
+	}
+
+# Поток данных Kafka - BookingConfirmed
+
+## Топик - "booking-confirmed"
+
+BookingService публикует в топик сообщение о подтверждении бронирования
+EventService подписан на событие топика о новых подтвержденных бронированиях и уменьшает количество свободных мест для события
+
+## Порт сервера Kafka
+
+"BootstrapServers": "localhost:9092"
+
