@@ -5,14 +5,14 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using RU.Uncio.BookingService.Infrastructure.DataAccess;
+using RU.Uncio.EventService.Infrastructure.DataAccess;
 
 #nullable disable
 
-namespace RU.Uncio.BookingService.Infrastructure.Migrations
+namespace RU.Uncio.EventsService.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260806144047_InitialMigration")]
+    [Migration("20260808045420_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -25,30 +25,34 @@ namespace RU.Uncio.BookingService.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("RU.Uncio.BookingService.Domain.Models.Booking", b =>
+            modelBuilder.Entity("RU.Uncio.EventService.Domain.Models.Event", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<int>("AvailableSeats")
+                        .HasColumnType("integer");
 
-                    b.Property<Guid>("EventId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("ProcessedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
+                    b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
+                    b.Property<DateTime>("EndAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("StartAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("TotalSeats")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.ToTable("bookings", (string)null);
+                    b.ToTable("events", (string)null);
                 });
 #pragma warning restore 612, 618
         }

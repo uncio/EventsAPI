@@ -54,35 +54,37 @@ namespace RU.Uncio.EventsService.Infrastructure
                 {
                     var consumeResult = consumer.Consume(stoppingToken);
 
-                    var order = JsonSerializer.Deserialize<BookingConfirmed>(consumeResult.Message.Value);
+                    var bookingRequest = JsonSerializer.Deserialize<BookingConfirmed>(consumeResult.Message.Value);
                     using var scope = scopeFactory.CreateScope();
                     var eventService = scope.ServiceProvider.GetRequiredService<IEventsService>();
-                    var targetEvent = await eventService.GetEventAsync(order.EventId, stoppingToken);
+                    var targetEvent = await eventService.GetEventAsync(bookingRequest!.EventId, stoppingToken);
                     
                     if(targetEvent != null)
                     {
-                        var bookingResult = targetEvent.TryReserveSeats(order.SeatsToBook);
+                        var bookingResult = targetEvent.TryReserveSeats(bookingRequest.SeatsToBook);                        
 
                         if (!bookingResult)
                         {
-                            logger.LogError($"No available seats for event {order.EventId}");
+                            logger.LogError($"No available seats for event {bookingRequest.EventId}");
                         }
                         else
                         {
+                            await eventService.UpdateEventAsync(targetEvent.Id, targetEvent, stoppingToken);
+
                             logger.LogInformation(
                             "Booking recieved [{Offset}] BookingId={BookingId}, EventId={EventId}, UserId={UserId}," +
                             " SeatsToBook={SeatsToBook}, ProcessedAt={ProcessedAt}",
                             consumeResult.TopicPartitionOffset,
-                            order?.BookingId,
-                            order?.EventId,
-                            order?.UserId,
-                            order?.SeatsToBook,
-                            order?.ProcessedAt);
+                            bookingRequest?.BookingId,
+                            bookingRequest?.EventId,
+                            bookingRequest?.UserId,
+                            bookingRequest?.SeatsToBook,
+                            bookingRequest?.ProcessedAt);
                         }
                     }
                     else
                     {
-                        throw new MissingEventException($"Event with ID {order.EventId} is not found in the collection");
+                        throw new MissingEventException($"Event with ID {bookingRequest.EventId} is not found in the collection");
                     }
 
                     consumer.StoreOffset(consumeResult);
