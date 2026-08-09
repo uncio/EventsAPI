@@ -95,7 +95,7 @@ namespace RU.Uncio.EventsService.Infrastructure
                     }
                     else
                     {
-                        throw new MissingEventException($"Event with ID {bookingRequest.EventId} is not found in the collection");
+                        logger.LogError($"Event with ID {bookingRequest.EventId} is not found in the collection");
                     }
 
                     consumer.StoreOffset(consumeResult);

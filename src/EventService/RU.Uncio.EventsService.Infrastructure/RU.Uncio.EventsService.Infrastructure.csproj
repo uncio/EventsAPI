@@ -19,9 +19,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\RU.Uncio.Contracts\RU.Uncio.Contracts.csproj" />
     <ProjectReference Include="..\RU.Uncio.EventService.Application\RU.Uncio.EventService.Application.csproj" />
     <ProjectReference Include="..\RU.Uncio.EventService.Domain\RU.Uncio.EventService.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\RU.Uncio.Contracts\bin\Release\net10.0\RU.Uncio.Contracts.dll" Link="Resources\RU.Uncio.Contracts.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="RU.Uncio.Contracts">
+      <HintPath>Resources\RU.Uncio.Contracts.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

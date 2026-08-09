@@ -19,8 +19,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\RU.Uncio.Contracts\RU.Uncio.Contracts.csproj" />
     <ProjectReference Include="..\RU.Uncio.BookingService.Application\RU.Uncio.BookingService.Application.csproj" />
     <ProjectReference Include="..\RU.Uncio.BookingService.Domain\RU.Uncio.BookingService.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="RU.Uncio.Contracts">
+      <HintPath>bin\Release\net10.0\RU.Uncio.Contracts.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>
