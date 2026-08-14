@@ -1,26 +1,133 @@
-# PostgreSQL для EventApi — совпадает с ConnectionStrings:DefaultConnection в appsettings.json
-# Запуск из корня репозитория: docker compose up -d
-# Остановка: docker compose down
-# Данные сохраняются в именованном томе eventapi_pgdata
-
 services:
-  postgres:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: eventapi-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 2181 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: eventapi-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      # Внешний listener для подключения с хоста (например, из dotnet run локально).
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Два listener'а: INTERNAL — для сервисов внутри сети Docker, EXTERNAL — для хоста.
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:29092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+
+  # ─────────────────────────── Базы данных (по одной на сервис) ───────────────────────────
+  pg1:
     image: postgres:16-alpine
-    container_name: eventapi-postgres
+    container_name: pg1
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: eventapi
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - eventapi_pgdata:/var/lib/postgresql/data
+      - pg1data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d eventapi"]
       interval: 5s
       timeout: 5s
+      retries: 5     
+
+  event-service:
+    build: ./EventService
+    ports:
+        - "7134:8080"
+    depends_on:
+        - kafka
+        - pg1 
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5433/eventapi
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      
+  pg2:
+    image: postgres:16-alpine
+    container_name: pg2
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: userapi
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg2data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d userapi"]
+      interval: 5s
+      timeout: 5s
       retries: 5
 
+  user-service:
+    build: ./UserService
+    ports:
+        - "7135:8081"
+    depends_on:
+        - kafka
+        - pg2 
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/userapi
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      
+  pg3:
+    image: postgres:16-alpine
+    container_name: pg3
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bookingapi
+    ports:
+      - "5434:5432"
+    volumes:
+      - pg3data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bookingapi"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  booking-service:
+    build: ./BookingService
+    ports:
+        - "7136:8082"
+    depends_on:
+        - kafka
+        - pg3 
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5434/bookingapi
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      
 volumes:
-  eventapi_pgdata:
+  pg1data:
+  pg2data:
+  pg3data:

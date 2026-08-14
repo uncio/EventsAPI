@@ -1,13 +1,32 @@
 <Solution>
+  <Folder Name="/BookingService/">
+    <Project Path="BookingService/RU.Uncio.BookingService.Application/RU.Uncio.BookingService.Application.csproj" Id="629f74b8-a280-41d7-aa9c-145c0ab03726" />
+    <Project Path="BookingService/RU.Uncio.BookingService.Domain/RU.Uncio.BookingService.Domain.csproj" Id="59aa13c9-d73e-46a9-b83d-ffd1681e3136" />
+    <Project Path="BookingService/RU.Uncio.BookingService.Infrastructure/RU.Uncio.BookingService.Infrastructure.csproj" Id="2bc3c18c-6203-4b4a-bd04-b612808115ea" />
+    <Project Path="BookingService/RU.Uncio.BookingService.Presentation/RU.Uncio.BookingService.Presentation.csproj" Id="d57e1be0-1282-41ad-b2d1-e9cf101358da" />
+  </Folder>
+  <Folder Name="/BookingService/Tests/">
+    <Project Path="BookingService/RU.Uncio.BookingService.IntegrationTests/RU.Uncio.BookingService.IntegrationTests.csproj" />
+    <Project Path="BookingService/RU.Uncio.BookingService.UnitTests/RU.Uncio.BookingService.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/EventService/">
+    <Project Path="EventService/RU.Uncio.EventService.Application/RU.Uncio.EventService.Application.csproj" />
+    <Project Path="EventService/RU.Uncio.EventService.Domain/RU.Uncio.EventService.Domain.csproj" Id="6e6b326b-561a-4c51-b0a8-b807e33dadee" />
+    <Project Path="EventService/RU.Uncio.EventService.Presentation/RU.Uncio.EventService.Presentation.csproj" Id="6da276e2-3b03-47b2-b821-561c69baa1c1" />
+    <Project Path="EventService/RU.Uncio.EventsService.Infrastructure/RU.Uncio.EventsService.Infrastructure.csproj" Id="b80e3e12-0604-4bc1-a47b-95d10240f718" />
+  </Folder>
+  <Folder Name="/EventService/Tests/">
+    <Project Path="EventService/RU.Uncio.EventService.IntegrationTests/RU.Uncio.EventService.IntegrationTests.csproj" />
+    <Project Path="EventService/RU.Uncio.EventService.UnitTests/RU.Uncio.EventService.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
-  <Folder Name="/Tests/">
-    <Project Path="EventsAPI.IntegrationTests/EventsAPI.IntegrationTests.csproj" />
-    <Project Path="EventsAPI.Tests/EventsAPI.Tests.csproj" Id="c4accd7f-9b8e-4281-8920-ab828cd802fd" />
+  <Folder Name="/UserService/">
+    <Project Path="UserService/RU.Uncio.UserService.Application/RU.Uncio.UserService.Application.csproj" Id="4b623c91-a9f8-4829-a859-8ddb5b752d9b" />
+    <Project Path="UserService/RU.Uncio.UserService.Domain/RU.Uncio.UserService.Domain.csproj" Id="28a03b34-72e4-4c8f-b045-a69f61730847" />
+    <Project Path="UserService/RU.Uncio.UserService.Infrastructure/RU.Uncio.UserService.Infrastructure.csproj" Id="58460bee-8d18-439d-b308-f9a63a0e7c0f" />
+    <Project Path="UserService/RU.Uncio.UserService.Presentation/RU.Uncio.UserService.Presentation.csproj" Id="81c4e68f-554a-4258-8beb-07f3b0645839" />
   </Folder>
-  <Project Path="RU.Uncio.Application/RU.Uncio.Application.csproj" Id="dd737773-2d3d-4ed5-8252-9b2f7dc8de0e" />
-  <Project Path="RU.Uncio.Domain/RU.Uncio.Domain.csproj" Id="f2e60a7e-3910-4e8b-98af-f3052499f729" />
-  <Project Path="RU.Uncio.Infrastructure/RU.Uncio.Infrastructure.csproj" Id="c9677688-bd32-4645-aa6b-fa156bb7233c" />
-  <Project Path="RU.Uncio.Presentation/RU.Uncio.Presentation.csproj" />
+  <Project Path="RU.Uncio.Contracts/RU.Uncio.Contracts.csproj" Id="92839d36-a839-47a9-ac2b-fc6d021cdb1e" />
 </Solution>
