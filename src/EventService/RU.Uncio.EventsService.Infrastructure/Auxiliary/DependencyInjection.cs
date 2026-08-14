@@ -5,6 +5,7 @@ using RU.Uncio.EventService.Application.Interfaces;
 using RU.Uncio.EventService.Infrastructure.DataAccess;
 using RU.Uncio.EventsService.Infrastructure;
 using RU.Uncio.Infrastructure.Repositories;
+using StackExchange.Redis;
 using System.Collections.ObjectModel;
 
 namespace RU.Uncio.EventService.Infrastructure.Auxiliary
@@ -30,6 +31,8 @@ namespace RU.Uncio.EventService.Infrastructure.Auxiliary
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddHostedService<BookingConsumer>();
             services.AddHostedService<TopicCreatorService>();
+
+            services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(configuration(["Redis:BootstrapServers"])));
 
             return services;
         }
