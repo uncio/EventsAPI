@@ -58,6 +58,29 @@ namespace RU.Uncio.EventService.Presentation.Controllers
         }
 
         /// <summary>
+        /// Returns top 10 events with most bookings
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
+        [Produces("application/json")]
+        [HttpGet("/top")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ApiResult<List<EventDTO>>>> GetTop10EventsAsync(CancellationToken token)
+        {
+            var top10Events = await eventsService.GetTop10EventsAsync(token);
+            var result = top10Events.Select(ev => ev.MapToDto()).ToList();
+
+             return Ok(new ApiResult<List<EventDTO>>
+            {
+                Data = result,
+                Success = true,
+                StatusCode = HttpStatusCode.OK,
+                Message = "Gettin top 10 events from collection"
+            });
+        }
+
+        /// <summary>
         /// Returns an event by ID from collection
         /// </summary>
         /// <param name="id">Id parameter to get an event</param>

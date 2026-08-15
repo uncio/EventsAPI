@@ -16,11 +16,12 @@ namespace RU.Uncio.Infrastructure.Repositories
     {
         private readonly AppDbContext db;
         private readonly IDatabase redis;
+        private readonly ILogger<EventRepository> logger;
         /// <summary>
         /// 
         /// </summary>
         /// <param name="dB"></param>
-        public EventRepository(AppDbContext dB, IConnectionMultiplexer red) { db = dB; redis = red.GetDatabase(); }
+        public EventRepository(AppDbContext dB, IConnectionMultiplexer red, ILogger<EventRepository> log) { db = dB; redis = red.GetDatabase(); logger = log; }
 
         /// <summary>
         /// Adds an event to DB
@@ -43,22 +44,37 @@ namespace RU.Uncio.Infrastructure.Repositories
         {
             var cacheKey = $"event:{id}";
 
-            var cached = await redis.StringGetAsync(cacheKey);
-            if (cached.HasValue)
+            try
             {
+                var cached = await redis.StringGetAsync(cacheKey);
+                if (cached.HasValue)
+                {
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-                return JsonSerializer.Deserialize<Event>((string)cached!, (JsonSerializerOptions)null);
+                    return JsonSerializer.Deserialize<Event>((string)cached!, (JsonSerializerOptions)null);
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+                }
             }
+            catch(Exception ex)
+            {
+                logger.LogError(ex, "Failed to connect to Redis");
+            }
+
 
             var ev = await db.Events.FindAsync(id);
             if (ev == null) return null;
 
-            await redis.StringSetAsync(
-                cacheKey,
-                JsonSerializer.Serialize(ev),
-                TimeSpan.FromMinutes(5)
-            );
+            try
+            {
+                await redis.StringSetAsync(
+                    cacheKey,
+                    JsonSerializer.Serialize(ev),
+                    TimeSpan.FromMinutes(5)
+                );
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to connect to Redis");
+            }
 
             return ev;
         }
@@ -79,12 +95,19 @@ namespace RU.Uncio.Infrastructure.Repositories
         {
             var cacheKey = $"events:top10";
 
-            var cached = await redis.StringGetAsync(cacheKey);
-            if (cached.HasValue)
+            try
             {
+                var cached = await redis.StringGetAsync(cacheKey);
+                if (cached.HasValue)
+                {
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-                return JsonSerializer.Deserialize<List<Event>>((string)cached!, (JsonSerializerOptions)null);
+                    return JsonSerializer.Deserialize<List<Event>>((string)cached!, (JsonSerializerOptions)null);
 #pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to connect to Redis");
             }
 
             var events = db.Events.ToList();
@@ -96,11 +119,18 @@ namespace RU.Uncio.Infrastructure.Repositories
                 return sold2.CompareTo(sold1);
             });
 
-            await redis.StringSetAsync(
-                cacheKey,
-                JsonSerializer.Serialize(events.Take(10)),
-                TimeSpan.FromMinutes(15)
-            );
+            try
+            {
+                await redis.StringSetAsync(
+                    cacheKey,
+                    JsonSerializer.Serialize(events.Take(10)),
+                    TimeSpan.FromMinutes(15)
+                );
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to connect to Redis");
+            }
 
             return events;
         }
