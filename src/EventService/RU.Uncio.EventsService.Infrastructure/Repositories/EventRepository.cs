@@ -145,6 +145,9 @@ namespace RU.Uncio.Infrastructure.Repositories
             var @event = new Event(id);
             db.Events.Remove(@event);
             await db.SaveChangesAsync(token);
+
+            string cacheKey = $"event:{id}";
+            await redis.KeyDeleteAsync(cacheKey);
         }
 
         /// <summary>
@@ -156,6 +159,20 @@ namespace RU.Uncio.Infrastructure.Repositories
         {
             db.Events.Update(ev);
             await db.SaveChangesAsync(token);
+
+            string cacheKey = $"event:{ev.Id}";
+            try
+            {
+                await redis.StringSetAsync(
+                    cacheKey,
+                    JsonSerializer.Serialize(ev),
+                    TimeSpan.FromMinutes(15)
+                );
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to connect to Redis");
+            }
         }
     }
 }

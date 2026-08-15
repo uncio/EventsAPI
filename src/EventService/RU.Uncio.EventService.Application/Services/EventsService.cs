@@ -88,7 +88,7 @@ namespace RU.Uncio.EventService.Application.Services
         public async Task<List<Event>> GetTop10EventsAsync(CancellationToken token)
         {
             var result = await repository.GetTop10EventsAsync(token);
-            var events = result.Values.ToList();
+            var events = result.ToList();
 
             return events;
         }

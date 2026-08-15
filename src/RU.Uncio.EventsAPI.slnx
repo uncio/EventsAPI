@@ -5,7 +5,7 @@
     <Project Path="BookingService/RU.Uncio.BookingService.Infrastructure/RU.Uncio.BookingService.Infrastructure.csproj" Id="2bc3c18c-6203-4b4a-bd04-b612808115ea" />
     <Project Path="BookingService/RU.Uncio.BookingService.Presentation/RU.Uncio.BookingService.Presentation.csproj" Id="d57e1be0-1282-41ad-b2d1-e9cf101358da" />
   </Folder>
-  <Folder Name="/BookingService/Tests/" Id="96ed1400-3365-e2d4-11bf-727125452baf">
+  <Folder Name="/BookingService/Tests/">
     <Project Path="BookingService/RU.Uncio.BookingService.IntegrationTests/RU.Uncio.BookingService.IntegrationTests.csproj" />
     <Project Path="BookingService/RU.Uncio.BookingService.UnitTests/RU.Uncio.BookingService.UnitTests.csproj" />
   </Folder>
@@ -15,9 +15,13 @@
     <Project Path="EventService/RU.Uncio.EventService.Presentation/RU.Uncio.EventService.Presentation.csproj" Id="6da276e2-3b03-47b2-b821-561c69baa1c1" />
     <Project Path="EventService/RU.Uncio.EventsService.Infrastructure/RU.Uncio.EventsService.Infrastructure.csproj" Id="b80e3e12-0604-4bc1-a47b-95d10240f718" />
   </Folder>
-  <Folder Name="/EventService/Tests/" Id="41a64801-f352-27e2-e901-8d46f6f7e54e">
-    <Project Path="EventService/RU.Uncio.EventService.IntegrationTests/RU.Uncio.EventService.IntegrationTests.csproj" />
-    <Project Path="EventService/RU.Uncio.EventService.UnitTests/RU.Uncio.EventService.UnitTests.csproj" />
+  <Folder Name="/EventService/Tests/">
+    <Project Path="EventService/RU.Uncio.EventService.IntegrationTests/RU.Uncio.EventService.IntegrationTests.csproj">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
+    <Project Path="EventService/RU.Uncio.EventService.UnitTests/RU.Uncio.EventService.UnitTests.csproj">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
