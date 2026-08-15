@@ -14,6 +14,18 @@ namespace RU.Uncio.EventService.Application.Interfaces
         /// <returns>Collection of events</returns>
         Task<Dictionary<Guid, Event>> GetEventsAsync(CancellationToken token);
         /// <summary>
+        /// Gets top 10 events from collection
+        /// </summary>
+        /// <returns>Collection of events</returns>
+        Task<List<Event>> GetTop10EventsAsync(CancellationToken token);
+        /// <summary>
+        /// Returns event by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        Task<Event> GetEventAsync(Guid id, CancellationToken token);
+        /// <summary>
         /// Adds an event to collection
         /// </summary>
         /// <param name="ev">Event to add</param>

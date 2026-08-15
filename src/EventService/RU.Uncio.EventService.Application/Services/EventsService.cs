@@ -80,6 +80,20 @@ namespace RU.Uncio.EventService.Application.Services
         }
 
         /// <summary>
+        /// Returns top 10 events
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<List<Event>> GetTop10EventsAsync(CancellationToken token)
+        {
+            var result = await repository.GetTop10EventsAsync(token);
+            var events = result.Values.ToList();
+
+            return events;
+        }
+
+        /// <summary>
         /// Gets an event from collection by ID
         /// </summary>
         /// <param name="id">ID parameter of event</param>
@@ -87,9 +101,8 @@ namespace RU.Uncio.EventService.Application.Services
         /// <returns></returns>
         public async Task<Event> GetEventAsync(Guid id, CancellationToken token)
         {
-            var events = await repository.GetEventsAsync(token);
-
-            if (events.TryGetValue(id, out var ev))
+            var ev = await repository.GetEventAsync(id, token);
+            if (ev != null)
                 return ev;
 
             logger.LogError($"Events collections doesn't contain an event with id {id}");
@@ -162,5 +175,7 @@ namespace RU.Uncio.EventService.Application.Services
                 throw new MissingEventException($"Events collections doesn't contain an event with id {id}");
             }
         }
+
+
     }
 }

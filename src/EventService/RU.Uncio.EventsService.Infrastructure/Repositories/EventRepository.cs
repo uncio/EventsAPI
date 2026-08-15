@@ -1,7 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using RU.Uncio.EventService.Application.Interfaces;
 using RU.Uncio.EventService.Domain.Models;
 using RU.Uncio.EventService.Infrastructure.DataAccess;
+using StackExchange.Redis;
+using System.Text.Json;
+using static Confluent.Kafka.ConfigPropertyNames;
 
 namespace RU.Uncio.Infrastructure.Repositories
 {
@@ -11,11 +15,12 @@ namespace RU.Uncio.Infrastructure.Repositories
     public class EventRepository : IEventRepository
     {
         private readonly AppDbContext db;
+        private readonly IDatabase redis;
         /// <summary>
         /// 
         /// </summary>
         /// <param name="dB"></param>
-        public EventRepository(AppDbContext dB) { db = dB; }
+        public EventRepository(AppDbContext dB, IConnectionMultiplexer red) { db = dB; redis = red.GetDatabase(); }
 
         /// <summary>
         /// Adds an event to DB
@@ -29,10 +34,76 @@ namespace RU.Uncio.Infrastructure.Repositories
         }
 
         /// <summary>
+        /// Returns event by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public async Task<Event> GetEventAsync(Guid id, CancellationToken token)
+        {
+            var cacheKey = $"event:{id}";
+
+            var cached = await redis.StringGetAsync(cacheKey);
+            if (cached.HasValue)
+            {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+                return JsonSerializer.Deserialize<Event>((string)cached!, (JsonSerializerOptions)null);
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+            }
+
+            var ev = await db.Events.FindAsync(id);
+            if (ev == null) return null;
+
+            await redis.StringSetAsync(
+                cacheKey,
+                JsonSerializer.Serialize(ev),
+                TimeSpan.FromMinutes(5)
+            );
+
+            return ev;
+        }
+
+        /// <summary>
         /// Gets all events from DB
         /// </summary>
         /// <returns>Collection of events</returns>
         public async Task<Dictionary<Guid, Event>> GetEventsAsync(CancellationToken token) => await db.Events.ToDictionaryAsync(ev => ev.Id, token);
+
+        /// <summary>
+        /// Get top 10 events
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<List<Event>> GetTop10EventsAsync(CancellationToken token)
+        {
+            var cacheKey = $"events:top10";
+
+            var cached = await redis.StringGetAsync(cacheKey);
+            if (cached.HasValue)
+            {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+                return JsonSerializer.Deserialize<List<Event>>((string)cached!, (JsonSerializerOptions)null);
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+            }
+
+            var events = db.Events.ToList();
+            events.Sort((ev1, ev2) =>
+            {
+                var sold1 = (ev1.TotalSeats - ev1.AvailableSeats) / ev1.TotalSeats;
+                var sold2 = (ev2.TotalSeats - ev2.AvailableSeats) / ev2.TotalSeats;
+
+                return sold2.CompareTo(sold1);
+            });
+
+            await redis.StringSetAsync(
+                cacheKey,
+                JsonSerializer.Serialize(events.Take(10)),
+                TimeSpan.FromMinutes(15)
+            );
+
+            return events;
+        }
 
         /// <summary>
         /// Deletes an event from collection by event ID
