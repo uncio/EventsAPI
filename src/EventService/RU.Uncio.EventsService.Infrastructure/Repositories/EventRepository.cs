@@ -64,13 +64,13 @@ namespace RU.Uncio.Infrastructure.Repositories
             var events = db.Events.ToList();
             events.Sort((ev1, ev2) =>
             {
-                var sold1 = (ev1.TotalSeats - ev1.AvailableSeats) / ev1.TotalSeats;
-                var sold2 = (ev2.TotalSeats - ev2.AvailableSeats) / ev2.TotalSeats;
+                double sold1 = (ev1.TotalSeats - ev1.AvailableSeats) / ev1.TotalSeats;
+                double sold2 = (ev2.TotalSeats - ev2.AvailableSeats) / ev2.TotalSeats;
 
                 return sold2.CompareTo(sold1);
             });            
 
-            return events;
+            return events.Take(10).ToList();
         }
 
         /// <summary>

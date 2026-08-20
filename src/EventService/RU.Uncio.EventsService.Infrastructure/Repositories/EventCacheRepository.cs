@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using RU.Uncio.EventService.Application.Interfaces;
 using RU.Uncio.EventService.Domain.Models;
 using RU.Uncio.EventService.Infrastructure.DataAccess;
@@ -15,13 +16,14 @@ namespace RU.Uncio.EventsService.Infrastructure.Repositories
     {
         private readonly IDatabase redis;
         private readonly ILogger<EventRepository> logger;
+        private readonly IConfiguration configuration;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="red"></param>
         /// <param name="log"></param>
-        public EventCacheRepository( IConnectionMultiplexer red, ILogger<EventRepository> log) { redis = red.GetDatabase(); logger = log; }
+        public EventCacheRepository( IConnectionMultiplexer red, ILogger<EventRepository> log, IConfiguration conf) { redis = red.GetDatabase(); logger = log; configuration = conf; }
         public async Task<Event?> GetByIdAsync(Guid id)
         {
             var cacheKey = $"event:{id}";
@@ -82,13 +84,14 @@ namespace RU.Uncio.EventsService.Infrastructure.Repositories
         public async Task SetAsync(Event ev)
         {
             var cacheKey = $"event:{ev.Id}";
+            int eventTTL = Int32.TryParse(configuration.GetSection("Redis:EventTTL").Value, out int mins) ? mins : 5 ;
 
             try
             {
                 await redis.StringSetAsync(
                     cacheKey,
                     JsonSerializer.Serialize(ev),
-                    TimeSpan.FromMinutes(5)
+                    TimeSpan.FromMinutes(eventTTL)
                 );
             }
             catch (Exception ex)
@@ -100,13 +103,14 @@ namespace RU.Uncio.EventsService.Infrastructure.Repositories
         public async Task SetTop10Async(List<Event> events)
         {
             var cacheKey = $"events:top10";
+            int top10EventsTTL = Int32.TryParse(configuration.GetSection("Redis:Top10EventsTTL").Value, out int mins) ? mins : 15;
 
             try
             {
                 await redis.StringSetAsync(
                     cacheKey,
                     JsonSerializer.Serialize(events),
-                    TimeSpan.FromMinutes(15)
+                    TimeSpan.FromMinutes(top10EventsTTL)
                 );
             }
             catch (Exception ex)

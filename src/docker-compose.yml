@@ -70,7 +70,8 @@ services:
         - "7134:8080"
     depends_on:
         - kafka
-        - pg1 
+        - pg1
+        - redis
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5433/eventapi
       SPRING_DATASOURCE_USERNAME: postgres
