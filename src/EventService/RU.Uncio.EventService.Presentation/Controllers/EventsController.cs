@@ -64,7 +64,7 @@ namespace RU.Uncio.EventService.Presentation.Controllers
         /// <returns></returns>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status200OK)]
         [Produces("application/json")]
-        [HttpGet("/events/top")]
+        [HttpGet("/Events/top")]
         [AllowAnonymous]
         public async Task<ActionResult<ApiResult<List<EventDTO>>>> GetTop10EventsAsync(CancellationToken token)
         {
