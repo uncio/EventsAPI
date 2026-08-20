@@ -13,16 +13,19 @@ namespace RU.Uncio.EventService.Application.Services
     {
         private readonly ILogger<EventsService> logger;
         private readonly IEventRepository repository;
+        private readonly IEventCacheRepository cacheRepository;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="log"></param>
         /// <param name="repo"></param>
-        public EventsService(ILogger<EventsService> log, IEventRepository repo)
+        /// <param name="cache"></param>
+        public EventsService(ILogger<EventsService> log, IEventRepository repo, IEventCacheRepository cache)
         {
             logger = log;
             repository = repo;
+            cacheRepository = cache;
         }
 
         /// <summary>
@@ -87,7 +90,15 @@ namespace RU.Uncio.EventService.Application.Services
         /// <exception cref="NotImplementedException"></exception>
         public async Task<List<Event>> GetTop10EventsAsync(CancellationToken token)
         {
-            var result = await repository.GetTop10EventsAsync(token);
+            var result = await cacheRepository.GetTop10Async();
+
+            if(result == null)
+            {
+                result = await repository.GetTop10EventsAsync(token);
+
+                await cacheRepository.SetTop10Async(result);
+            }
+
             var events = result.ToList();
 
             return events;
@@ -101,7 +112,13 @@ namespace RU.Uncio.EventService.Application.Services
         /// <returns></returns>
         public async Task<Event> GetEventAsync(Guid id, CancellationToken token)
         {
-            var ev = await repository.GetEventAsync(id, token);
+            var ev = await cacheRepository.GetByIdAsync(id);
+            if(ev == null)
+            {
+                ev = await repository.GetEventAsync(id, token);
+                await cacheRepository.SetAsync(ev);
+            }
+
             if (ev != null)
                 return ev;
 
@@ -148,6 +165,7 @@ namespace RU.Uncio.EventService.Application.Services
                 {
                     currentEvent.UpdateWith(ev);
                     await repository.UpdateEventAsync(currentEvent, token);
+                    await cacheRepository.SetAsync(ev);
                 }
             }
             else
@@ -169,6 +187,7 @@ namespace RU.Uncio.EventService.Application.Services
             if (events.TryGetValue(id, out var _))
             {
                 await repository.RemoveEventAsync(id, token);
+                await cacheRepository.RemoveEventAsync(id);
             }
             else
             {

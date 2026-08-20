@@ -32,7 +32,7 @@ namespace RU.Uncio.EventService.Infrastructure.Auxiliary
             services.AddHostedService<BookingConsumer>();
             services.AddHostedService<TopicCreatorService>();
 
-            var redisServer = configuration.GetSection("Redis:BootstrapServers").Value;
+            var redisServer = configuration.GetSection("Redis:ConnectionString").Value;
             services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisServer!));
 
             return services;

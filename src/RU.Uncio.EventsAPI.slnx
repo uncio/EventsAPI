@@ -16,12 +16,8 @@
     <Project Path="EventService/RU.Uncio.EventsService.Infrastructure/RU.Uncio.EventsService.Infrastructure.csproj" Id="b80e3e12-0604-4bc1-a47b-95d10240f718" />
   </Folder>
   <Folder Name="/EventService/Tests/">
-    <Project Path="EventService/RU.Uncio.EventService.IntegrationTests/RU.Uncio.EventService.IntegrationTests.csproj">
-      <Build Solution="Debug|*" Project="false" />
-    </Project>
-    <Project Path="EventService/RU.Uncio.EventService.UnitTests/RU.Uncio.EventService.UnitTests.csproj">
-      <Build Solution="Debug|*" Project="false" />
-    </Project>
+    <Project Path="EventService/RU.Uncio.EventService.IntegrationTests/RU.Uncio.EventService.IntegrationTests.csproj" />
+    <Project Path="EventService/RU.Uncio.EventService.UnitTests/RU.Uncio.EventService.UnitTests.csproj" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />

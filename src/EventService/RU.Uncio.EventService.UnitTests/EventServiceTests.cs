@@ -4,6 +4,7 @@ using RU.Uncio.EventService.Application.Interfaces;
 using RU.Uncio.EventService.Application.Services;
 using RU.Uncio.EventService.Domain.Exceptions;
 using RU.Uncio.EventService.Domain.Models;
+using System.Net;
 
 namespace RU.Uncio.EventService.UnitTests
 {
@@ -16,8 +17,9 @@ namespace RU.Uncio.EventService.UnitTests
         public EventServiceTests()
         {
             var mockRepository = new Mock<IEventRepository>();
+            var mockCacheRepository = new Mock<IEventCacheRepository>();
             logger = new Mock<ILogger<EventsService>>();
-            eventsService = new EventsService(logger.Object, mockRepository.Object);
+            eventsService = new EventsService(logger.Object, mockRepository.Object, mockCacheRepository.Object);
             events = new List<Event>
                 {
                     new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
@@ -34,7 +36,8 @@ namespace RU.Uncio.EventService.UnitTests
         {
             //Arrange
             var mockRepositoryToAdd = new Mock<IEventRepository>();
-            var eventsServiceToAdd = new EventsService(logger.Object, mockRepositoryToAdd.Object);
+            var mockCacheRepositoryToAdd = new Mock<IEventCacheRepository>();
+            var eventsServiceToAdd = new EventsService(logger.Object, mockRepositoryToAdd.Object, mockCacheRepositoryToAdd.Object);
             var initialEvents = new List<Event>
                 {
                     new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
@@ -60,11 +63,12 @@ namespace RU.Uncio.EventService.UnitTests
         }
 
         [Fact]
-        public async Task UpdateEvent_Success()
+        public async Task UpdateEvent_Success_CacheUpdated()
         {
             //Arrange
             var mockRepositoryToUpdate = new Mock<IEventRepository>();
-            var eventsServiceToUpdate = new EventsService(logger.Object, mockRepositoryToUpdate.Object);
+            var mockCacheRepositoryToAdd = new Mock<IEventCacheRepository>();
+            var eventsServiceToUpdate = new EventsService(logger.Object, mockRepositoryToUpdate.Object, mockCacheRepositoryToAdd.Object);
             var initialEvents = new List<Event>
                 {
                     new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
@@ -93,6 +97,7 @@ namespace RU.Uncio.EventService.UnitTests
             Assert.Equal(updatingEvent.Title, result.Last().Title);
             Assert.Equal(updatingEvent.StartAt.Date, result.Last().StartAt.Date);
             Assert.Equal(updatingEvent.EndAt.Date, result.Last().EndAt.Date);
+            mockCacheRepositoryToAdd.Verify(repository => repository.SetAsync(updatingEvent), Times.Once);
         }
 
         [Fact]
@@ -100,7 +105,8 @@ namespace RU.Uncio.EventService.UnitTests
         {
             //Arrange
             var mockRepositoryToDelete = new Mock<IEventRepository>();
-            var eventsServiceToDelete = new EventsService(logger.Object, mockRepositoryToDelete.Object);
+            var mockCacheRepositoryToAdd = new Mock<IEventCacheRepository>();
+            var eventsServiceToDelete = new EventsService(logger.Object, mockRepositoryToDelete.Object, mockCacheRepositoryToAdd.Object);
             var initialEvents = new List<Event>
                 {
                     new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
@@ -138,16 +144,50 @@ namespace RU.Uncio.EventService.UnitTests
         }
 
         [Fact]
-        public async Task GetEventById_ReturnsCorrectEvent()
+        public async Task GetEventById_ReturnsCorrectEventFromCache()
         {
             //Arrange
             var id = events.Keys.ToList()[1];
+            var mockRepository = new Mock<IEventRepository>();
+            var mockCacheRepository = new Mock<IEventCacheRepository>();
+
+            mockCacheRepository.Setup(method => method.GetByIdAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(events.FirstOrDefault(ev => ev.Key == id).Value);
+            var logger = new Mock<ILogger<EventsService>>();
+
+            var eventsService = new EventsService(logger.Object, mockRepository.Object, mockCacheRepository.Object);
             // Act
             var result = await eventsService.GetEventAsync(id, TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(id, result.Id);
             Assert.Equal("Event2", result.Title);
+            mockRepository.Verify(repository => repository.GetEventAsync(id, TestContext.Current.CancellationToken), Times.Never);
+        }
+
+        [Fact]
+        public async Task GetEventById_WhenNotInCahce_ReturnsCorrectEventFromRepositoryAndSaveInCache()
+        {
+            //Arrange
+            var ev = events.Values.ToList()[1];
+            var id = ev.Id;
+            var mockRepository = new Mock<IEventRepository>();
+
+            mockRepository.Setup(method => method.GetEventAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(events.FirstOrDefault(ev => ev.Key == id).Value);
+            var logger = new Mock<ILogger<EventsService>>();
+            var mockCacheRepositoryToAdd = new Mock<IEventCacheRepository>();
+            var eventsService = new EventsService(logger.Object, mockRepository.Object, mockCacheRepositoryToAdd.Object);
+
+
+            // Act
+            var result = await eventsService.GetEventAsync(id, TestContext.Current.CancellationToken);
+
+            // Assert
+            Assert.Equal(id, result.Id);
+            Assert.Equal("Event2", result.Title);
+            mockRepository.Verify(repository => repository.GetEventAsync(id, TestContext.Current.CancellationToken), Times.Once);
+            mockCacheRepositoryToAdd.Verify(repository => repository.SetAsync(ev), Times.Once);
         }
 
         [Fact]
@@ -423,7 +463,8 @@ namespace RU.Uncio.EventService.UnitTests
             //Arrange
             var expectedExceptionMessage = $"Events collections doesn't contain an event with id";
             var mockRepositoryToUpdate = new Mock<IEventRepository>();
-            var eventsServiceToUpdate = new EventsService(logger.Object, mockRepositoryToUpdate.Object);
+            var mockCacheRepositoryToAdd = new Mock<IEventCacheRepository>();
+            var eventsServiceToUpdate = new EventsService(logger.Object, mockRepositoryToUpdate.Object, mockCacheRepositoryToAdd.Object);
             var initialEvents = new List<Event>
                 {
                     new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
@@ -452,7 +493,8 @@ namespace RU.Uncio.EventService.UnitTests
         {
             //Arrange            
             var mockRepositoryToUpdate = new Mock<IEventRepository>();
-            var eventsServiceToUpdate = new EventsService(logger.Object, mockRepositoryToUpdate.Object);
+            var mockCacheRepositoryToAdd = new Mock<IEventCacheRepository>();
+            var eventsServiceToUpdate = new EventsService(logger.Object, mockRepositoryToUpdate.Object, mockCacheRepositoryToAdd.Object);
             var initialEvents = new List<Event>
                 {
                     new("Event1", new DateTime(2026, 1, 14), new DateTime(2026, 1, 15), 10),
