@@ -8,6 +8,8 @@ using EventsService = RU.Uncio.EventService.Application.Services.EventsService;
 using RU.Uncio.Infrastructure.Repositories;
 using Testcontainers.PostgreSql;
 using Xunit;
+using StackExchange.Redis;
+using RU.Uncio.EventService.Application.Interfaces;
 
 namespace RU.Uncio.EventService.IntegrationTests
 {
@@ -55,14 +57,16 @@ namespace RU.Uncio.EventService.IntegrationTests
             // Arrange
             await using var context = CreateContext();
 
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var ev = new Event("Title1", DateTime.Now.ToUniversalTime() - TimeSpan.FromDays(1), DateTime.Now.ToUniversalTime() + TimeSpan.FromDays(1), 10);
             var t = new CancellationTokenSource();
             await repository.AddEventAsync(ev, t.Token);
 
             // Act
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
+            var actRepository = new EventRepository(actContext, logger.Object);
             var actEvents = await actRepository.GetEventsAsync(t.Token);
             var actEv = actEvents.Values.FirstOrDefault(e => e.Id == ev.Id);
             actEv?.Title = "Event3";
@@ -70,7 +74,7 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Assert
             await using var verifyContext = CreateContext();
-            var verifyRepository = new EventRepository(verifyContext);
+            var verifyRepository = new EventRepository(verifyContext, logger.Object);
             var verifyEvents = await verifyRepository.GetEventsAsync(t.Token);
             var updated = verifyEvents.Values.FirstOrDefault(e => e.Id == ev.Id);
             Assert.Equal("Event3", updated?.Title);
@@ -85,7 +89,9 @@ namespace RU.Uncio.EventService.IntegrationTests
             await using var context = CreateContext();
             var t = new CancellationTokenSource();
 
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var ev = new Event("Title1", DateTime.Now.ToUniversalTime() - TimeSpan.FromDays(1), DateTime.Now.ToUniversalTime() + TimeSpan.FromDays(1), 10);
 
             // Act
@@ -93,7 +99,7 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Assert — через отдельный контекст
             await using var verifyContext = CreateContext();
-            var verifyRepository = new EventRepository(verifyContext);
+            var verifyRepository = new EventRepository(verifyContext, logger.Object);
             var verifyEvents = await verifyRepository.GetEventsAsync(t.Token);
             var saved = verifyEvents.Values.FirstOrDefault(e => e.Id == ev.Id);
 
@@ -110,18 +116,20 @@ namespace RU.Uncio.EventService.IntegrationTests
             await using var context = CreateContext();
             var t = new CancellationTokenSource();
 
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var ev = new Event("Title1", DateTime.Now.ToUniversalTime() - TimeSpan.FromDays(1), DateTime.Now.ToUniversalTime() + TimeSpan.FromDays(1), 10);
             await repository.AddEventAsync(ev, t.Token);
 
             // Act
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
+            var actRepository = new EventRepository(actContext, logger.Object);
             await actRepository.RemoveEventAsync(ev.Id, t.Token);
 
             // Assert
             await using var verifyContext = CreateContext();
-            var verifyRepository = new EventRepository(verifyContext);
+            var verifyRepository = new EventRepository(verifyContext, logger.Object);
             var verifyEvents = await verifyRepository.GetEventsAsync(t.Token);
             var deleted = verifyEvents.Values.FirstOrDefault(e => e.Id == ev.Id);
 
@@ -137,7 +145,9 @@ namespace RU.Uncio.EventService.IntegrationTests
             await using var context = CreateContext();
             var t = new CancellationTokenSource();
 
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
 
             var ev = new Event("Title1", DateTime.Now.ToUniversalTime() - TimeSpan.FromDays(1), DateTime.Now.ToUniversalTime() + TimeSpan.FromDays(1), 10);
             var ev2 = new Event("Title2", DateTime.Now.ToUniversalTime() - TimeSpan.FromDays(1), DateTime.Now.ToUniversalTime() + TimeSpan.FromDays(1), 10);
@@ -146,7 +156,7 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Act
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
+            var actRepository = new EventRepository(actContext, logger.Object);
             var result = await actRepository.GetEventsAsync(t.Token);
 
             // Assert
@@ -164,13 +174,15 @@ namespace RU.Uncio.EventService.IntegrationTests
             await using var context = CreateContext();
             var t = new CancellationTokenSource();
 
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var ev = new Event("Title1", DateTime.Now.ToUniversalTime() - TimeSpan.FromDays(1), DateTime.Now.ToUniversalTime() + TimeSpan.FromDays(1), 10);
             await repository.AddEventAsync(ev, t.Token);
 
             // Act
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
+            var actRepository = new EventRepository(actContext, logger.Object);
             var actEvents = await actRepository.GetEventsAsync(t.Token);
             var result = actEvents.Values.FirstOrDefault(e => e.Id == ev.Id);
 
@@ -186,7 +198,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Title21", DateTime.Now.ToUniversalTime() - TimeSpan.FromDays(1), DateTime.Now.ToUniversalTime() + TimeSpan.FromDays(1), 10);
@@ -201,10 +215,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var notExpectedResult = "Title3";
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, title: searchSubstring);
 
             // Assert
@@ -219,7 +234,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Title21", DateTime.Now.ToUniversalTime() - TimeSpan.FromDays(1), DateTime.Now.ToUniversalTime() + TimeSpan.FromDays(1), 10);
@@ -232,10 +249,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var searchSubstring = "4";
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, title: searchSubstring);
 
             //Assert
@@ -249,7 +267,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -264,10 +284,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var notExpectedResult = "Event22";
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, from: dateFrom);
 
             //Assert
@@ -282,7 +303,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -294,10 +317,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var dateFrom = new DateTime(2026, 1, 15).ToUniversalTime();
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, from: dateFrom);
 
             //Assert
@@ -311,7 +335,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -326,10 +352,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var notExpectedResult = "Event22";
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, to: dateTo);
 
             //Assert
@@ -344,7 +371,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -357,10 +386,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var dateTo = new DateTime(2026, 1, 14).ToUniversalTime();
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, to: dateTo);
 
             //Assert
@@ -374,7 +404,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -390,10 +422,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var notExpectedResult = "Event22";
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, from: dateFrom, to: dateTo);
 
             //Assert
@@ -408,7 +441,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -422,10 +457,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var dateTo = new DateTime(2026, 1, 14).ToUniversalTime();
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, from: dateFrom, to: dateTo);
 
             //Assert
@@ -439,7 +475,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -456,10 +494,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var expectedResult = "Event2";
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, title: searchSubstring, from: dateFrom, to: dateTo);
 
             //Assert
@@ -474,7 +513,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -489,10 +530,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var searchSubstring = "3";
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, title: searchSubstring, from: dateFrom, to: dateTo);
 
             //Assert
@@ -506,7 +548,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -522,10 +566,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var expectedResult = "Event1";
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, title: searchSubstring, from: dateFrom);
 
             //Assert
@@ -540,7 +585,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -554,10 +601,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var searchSubstring = "3";
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, title: searchSubstring, from: dateFrom);
 
             //Assert
@@ -571,7 +619,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -587,10 +637,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var expectedResult = "Event1";
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, title: searchSubstring, to: dateTo);
 
             //Assert
@@ -605,7 +656,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -619,10 +672,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var searchSubstring = "3";
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
             var result = await eventService.GetEventsAsync(t.Token, title: searchSubstring, to: dateTo);
 
             //Assert
@@ -636,7 +690,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -654,10 +710,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var expectedResult = "Event22";
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
 
             var currentEvents = await eventService.GetEventsAsync(t.Token);
             var result = eventService.GetPaginatedEvents(currentEvents, page: page, pageSize: pageSize, out int totalPages);
@@ -675,7 +732,9 @@ namespace RU.Uncio.EventService.IntegrationTests
 
             // Arrange
             await using var context = CreateContext();
-            var repository = new EventRepository(context);
+            var logger = new Mock<ILogger<EventRepository>>();
+            var redis = new Mock<IConnectionMultiplexer>();
+            var repository = new EventRepository(context, logger.Object);
             var t = new CancellationTokenSource();
 
             var ev = new Event("Event1", new DateTime(2026, 1, 14).ToUniversalTime(), new DateTime(2026, 1, 15).ToUniversalTime(), 10);
@@ -693,10 +752,11 @@ namespace RU.Uncio.EventService.IntegrationTests
             var expectingTotalPages = 1;
 
             // Act
-            var logger = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
+            var logger2 = new Mock<ILogger<RU.Uncio.EventService.Application.Services.EventsService>>();
             await using var actContext = CreateContext();
-            var actRepository = new EventRepository(actContext);
-            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger.Object, actRepository);
+            var actRepository = new EventRepository(actContext, logger.Object);
+            var cacheRepo = new Mock<IEventCacheRepository>();
+            var eventService = new RU.Uncio.EventService.Application.Services.EventsService(logger2.Object, actRepository, cacheRepo.Object);
 
             var currentEvents = await eventService.GetEventsAsync(t.Token, title: searchSubstring);
             var result = eventService.GetPaginatedEvents(currentEvents, page: page, pageSize: pageSize, out int totalPages);

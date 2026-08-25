@@ -1,7 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using RU.Uncio.EventService.Application.Interfaces;
 using RU.Uncio.EventService.Domain.Models;
 using RU.Uncio.EventService.Infrastructure.DataAccess;
+using System.Text.Json;
+using static Confluent.Kafka.ConfigPropertyNames;
 
 namespace RU.Uncio.Infrastructure.Repositories
 {
@@ -11,11 +14,13 @@ namespace RU.Uncio.Infrastructure.Repositories
     public class EventRepository : IEventRepository
     {
         private readonly AppDbContext db;
+        //private readonly IDatabase redis;
+        private readonly ILogger<EventRepository> logger;
         /// <summary>
         /// 
         /// </summary>
         /// <param name="dB"></param>
-        public EventRepository(AppDbContext dB) { db = dB; }
+        public EventRepository(AppDbContext dB, /*IConnectionMultiplexer red,*/ ILogger<EventRepository> log) { db = dB; /*redis = red.GetDatabase();*/ logger = log; }
 
         /// <summary>
         /// Adds an event to DB
@@ -29,10 +34,45 @@ namespace RU.Uncio.Infrastructure.Repositories
         }
 
         /// <summary>
+        /// Returns event by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public async Task<Event> GetEventAsync(Guid id, CancellationToken token)
+        {
+            var ev = await db.Events.FindAsync(id);
+            if (ev == null) return null;
+
+            return ev;
+        }
+
+        /// <summary>
         /// Gets all events from DB
         /// </summary>
         /// <returns>Collection of events</returns>
         public async Task<Dictionary<Guid, Event>> GetEventsAsync(CancellationToken token) => await db.Events.ToDictionaryAsync(ev => ev.Id, token);
+
+        /// <summary>
+        /// Get top 10 events
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<List<Event>> GetTop10EventsAsync(CancellationToken token)
+        {
+            var events = db.Events.ToList();
+
+            events.Sort((ev1, ev2) =>
+            {
+                double sold1 = (double)(ev1.TotalSeats - ev1.AvailableSeats) / ev1.TotalSeats;
+                double sold2 = (double)(ev2.TotalSeats - ev2.AvailableSeats) / ev2.TotalSeats;
+
+                return sold2.CompareTo(sold1);
+            });            
+
+            return events.Take(10).ToList();
+        }
 
         /// <summary>
         /// Deletes an event from collection by event ID
@@ -43,7 +83,7 @@ namespace RU.Uncio.Infrastructure.Repositories
         {
             var @event = new Event(id);
             db.Events.Remove(@event);
-            await db.SaveChangesAsync(token);
+            await db.SaveChangesAsync(token);                      
         }
 
         /// <summary>

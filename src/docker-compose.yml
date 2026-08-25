@@ -35,6 +35,15 @@ services:
       interval: 10s
       timeout: 10s
       retries: 15
+      
+  redis:
+    image: redis:7.2-alpine
+    container_name: eventapi-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   # ─────────────────────────── Базы данных (по одной на сервис) ───────────────────────────
   pg1:
@@ -61,7 +70,8 @@ services:
         - "7134:8080"
     depends_on:
         - kafka
-        - pg1 
+        - pg1
+        - redis
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5433/eventapi
       SPRING_DATASOURCE_USERNAME: postgres

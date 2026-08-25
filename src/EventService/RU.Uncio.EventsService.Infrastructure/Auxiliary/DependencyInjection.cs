@@ -4,7 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 using RU.Uncio.EventService.Application.Interfaces;
 using RU.Uncio.EventService.Infrastructure.DataAccess;
 using RU.Uncio.EventsService.Infrastructure;
+using RU.Uncio.EventsService.Infrastructure.Repositories;
 using RU.Uncio.Infrastructure.Repositories;
+using StackExchange.Redis;
 using System.Collections.ObjectModel;
 
 namespace RU.Uncio.EventService.Infrastructure.Auxiliary
@@ -30,6 +32,15 @@ namespace RU.Uncio.EventService.Infrastructure.Auxiliary
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddHostedService<BookingConsumer>();
             services.AddHostedService<TopicCreatorService>();
+
+            var redisServer = configuration.GetSection("Redis:ConnectionString").Value;
+            services.AddScoped<IEventCacheRepository, EventCacheRepository>();
+            var options = new ConfigurationOptions
+            {
+                EndPoints = { redisServer! },
+                AbortOnConnectFail = false
+            };
+            services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(options));
 
             return services;
         }

@@ -13,16 +13,19 @@ namespace RU.Uncio.EventService.Application.Services
     {
         private readonly ILogger<EventsService> logger;
         private readonly IEventRepository repository;
+        private readonly IEventCacheRepository cacheRepository;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="log"></param>
         /// <param name="repo"></param>
-        public EventsService(ILogger<EventsService> log, IEventRepository repo)
+        /// <param name="cache"></param>
+        public EventsService(ILogger<EventsService> log, IEventRepository repo, IEventCacheRepository cache)
         {
             logger = log;
             repository = repo;
+            cacheRepository = cache;
         }
 
         /// <summary>
@@ -80,6 +83,28 @@ namespace RU.Uncio.EventService.Application.Services
         }
 
         /// <summary>
+        /// Returns top 10 events
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<List<Event>> GetTop10EventsAsync(CancellationToken token)
+        {
+            var result = await cacheRepository.GetTop10Async();
+
+            if(result == null)
+            {
+                result = await repository.GetTop10EventsAsync(token);
+
+                await cacheRepository.SetTop10Async(result);
+            }
+
+            var events = result.ToList();
+
+            return events;
+        }
+
+        /// <summary>
         /// Gets an event from collection by ID
         /// </summary>
         /// <param name="id">ID parameter of event</param>
@@ -87,9 +112,14 @@ namespace RU.Uncio.EventService.Application.Services
         /// <returns></returns>
         public async Task<Event> GetEventAsync(Guid id, CancellationToken token)
         {
-            var events = await repository.GetEventsAsync(token);
+            var ev = await cacheRepository.GetByIdAsync(id);
+            if(ev == null)
+            {
+                ev = await repository.GetEventAsync(id, token);
+                await cacheRepository.SetAsync(ev);
+            }
 
-            if (events.TryGetValue(id, out var ev))
+            if (ev != null)
                 return ev;
 
             logger.LogError($"Events collections doesn't contain an event with id {id}");
@@ -135,6 +165,7 @@ namespace RU.Uncio.EventService.Application.Services
                 {
                     currentEvent.UpdateWith(ev);
                     await repository.UpdateEventAsync(currentEvent, token);
+                    await cacheRepository.SetAsync(ev);
                 }
             }
             else
@@ -156,11 +187,14 @@ namespace RU.Uncio.EventService.Application.Services
             if (events.TryGetValue(id, out var _))
             {
                 await repository.RemoveEventAsync(id, token);
+                await cacheRepository.RemoveEventAsync(id);
             }
             else
             {
                 throw new MissingEventException($"Events collections doesn't contain an event with id {id}");
             }
         }
+
+
     }
 }
