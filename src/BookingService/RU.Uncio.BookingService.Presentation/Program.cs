@@ -11,12 +11,14 @@ using RU.Uncio.BookingService.Infrastructure.Auxiliary;
 using RU.Uncio.BookingService.Infrastructure.DataAccess;
 using RU.Uncio.BookingService.Middlewares;
 using RU.Uncio.BookingService.Presentation.Controllers;
+using Serilog;
+using Serilog.Formatting.Compact;
 using System.Reflection;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-const string serviceName = "otel-bookings-api";
+const string serviceName = "otel-booking-service";
 const string serviceVersion = "1.0.0";
 
 builder.Services
@@ -30,11 +32,15 @@ builder.Services
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
         .AddEntityFrameworkCoreInstrumentation()
-        .AddOtlpExporter(o => o.Endpoint = new Uri(configuration["Otlp:Endpoint"]!)))
+        .AddOtlpExporter(o => o.Endpoint = new Uri(builder.Configuration["Otlp:Endpoint"]!)))
     .WithMetrics(metrics => metrics
         .AddAspNetCoreInstrumentation()
         .AddRuntimeInstrumentation()
         .AddPrometheusExporter());
+
+builder.Host.UseSerilog((ctx, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .WriteTo.Console(new CompactJsonFormatter()));
 // Add services to the container.
 
 builder.Services.AddControllers()
@@ -98,7 +104,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
+app.MapPrometheusScrapingEndpoint();
 
 app.UseAuthentication();
 app.UseAuthorization();
