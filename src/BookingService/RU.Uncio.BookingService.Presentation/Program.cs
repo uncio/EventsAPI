@@ -18,7 +18,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-const string serviceName = "otel-booking-service";
+const string serviceName = "booking-service";
 const string serviceVersion = "1.0.0";
 
 builder.Services

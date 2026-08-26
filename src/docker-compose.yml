@@ -44,7 +44,33 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+      
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: eventapi-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
 
+  jaeger:
+    image: jaegertracing/all-in-one:1.56
+    container_name: eventapi-jaeger
+    ports:
+      - "16686:16686"   # UI
+      - "4317:4317"     # OTLP gRPC
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: eventapi-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-data:/var/lib/grafana
   # ─────────────────────────── Базы данных (по одной на сервис) ───────────────────────────
   pg1:
     image: postgres:16-alpine
@@ -73,6 +99,7 @@ services:
         - pg1
         - redis
     environment:
+      Otlp__Endpoint: http://jaeger:4317
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5433/eventapi
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -103,6 +130,7 @@ services:
         - kafka
         - pg2 
     environment:
+      Otlp__Endpoint: http://jaeger:4317
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/userapi
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -133,6 +161,7 @@ services:
         - kafka
         - pg3 
     environment:
+      Otlp__Endpoint: http://jaeger:4317
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5434/bookingapi
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
@@ -141,3 +170,4 @@ volumes:
   pg1data:
   pg2data:
   pg3data:
+  grafana-data:

@@ -17,7 +17,7 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-const string serviceName = "otel-user-service";
+const string serviceName = "user-service";
 const string serviceVersion = "1.0.0";
 
 builder
