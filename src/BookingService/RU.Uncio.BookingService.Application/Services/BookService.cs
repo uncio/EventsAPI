@@ -68,7 +68,7 @@ namespace RU.Uncio.BookingService.Application.Services
             if (bookings.TryGetValue(bookingId, out var booking))
                 return booking;
 
-            logger.LogError($"Booking queue doesn't contain a booking with id {bookingId}");
+            logger.LogError("Booking queue doesn't contain a booking with id {BookingId}", bookingId);
             return null;
         }
 

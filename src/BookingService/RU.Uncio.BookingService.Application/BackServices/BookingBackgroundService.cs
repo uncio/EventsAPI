@@ -81,7 +81,7 @@ namespace RU.Uncio.BookingService.Application.Backservices
                     catch (Exception ex)
                     {
                         targetBooking.Reject();
-                        logger.LogError(ex, $"Failed to book an event with ID {targetBooking.EventId}");
+                        logger.LogError(ex, "Failed to book an event with ID {BookingId}", targetBooking.EventId);
                     }
 
                     await bookingRepository.UpdateBookingAsync(targetBooking, stoppingToken);

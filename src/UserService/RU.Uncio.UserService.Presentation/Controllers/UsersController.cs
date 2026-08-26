@@ -58,8 +58,8 @@ namespace RU.Uncio.UserService.Presentation.Controllers
         {
             if (!ModelState.IsValid)
             {
-                logger.LogError($"Validation failed: {String.Join(";",
-                    ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
+                logger.LogError("Validation failed: {ValidatingProperties}", String.Join(";",
+                    ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>())));
                 throw new ValidationException($"Validation failed: {String.Join(";",
                     ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
             }

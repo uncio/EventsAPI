@@ -76,7 +76,7 @@ namespace RU.Uncio.EventsService.Infrastructure
 
                         if (!bookingResult)
                         {
-                            logger.LogError($"No available seats for event {bookingRequest.EventId}");
+                            logger.LogError("No available seats for event {EventId}", bookingRequest.EventId);
                         }
                         else
                         {
@@ -95,7 +95,7 @@ namespace RU.Uncio.EventsService.Infrastructure
                     }
                     else
                     {
-                        logger.LogError($"Event with ID {bookingRequest.EventId} is not found in the collection");
+                        logger.LogError("Event with ID {EventId} is not found in the collection", bookingRequest.EventId);
                     }
 
                     consumer.StoreOffset(consumeResult);
