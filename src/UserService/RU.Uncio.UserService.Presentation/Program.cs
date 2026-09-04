@@ -1,18 +1,46 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using RU.Uncio.UserService.Application.Auxiliary;
 using RU.Uncio.UserService.Infrastructure.Auxiliary;
+using RU.Uncio.UserService.Infrastructure.DataAccess;
+using RU.Uncio.UserService.Presentation.Middlewares;
+using Serilog;
+using Serilog.Formatting.Compact;
 using System.Reflection;
 using System.Text;
-using RU.Uncio.UserService.Infrastructure.DataAccess;
-using Microsoft.EntityFrameworkCore;
-using RU.Uncio.UserService.Presentation.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+const string serviceName = "user-service";
+const string serviceVersion = "1.0.0";
 
+builder
+    .Services
+    .AddOpenApi()
+    .AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(
+            serviceName: serviceName,
+            serviceVersion: serviceVersion))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter(o => o.Endpoint = new Uri(builder.Configuration["Otlp:Endpoint"]!)))
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddPrometheusExporter());
+
+builder.Host.UseSerilog((ctx, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .WriteTo.Console(new CompactJsonFormatter()));
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
     {
@@ -74,6 +102,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.MapPrometheusScrapingEndpoint();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

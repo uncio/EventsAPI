@@ -122,7 +122,7 @@ namespace RU.Uncio.EventService.Application.Services
             if (ev != null)
                 return ev;
 
-            logger.LogError($"Events collections doesn't contain an event with id {id}");
+            logger.LogError("Events collections doesn't contain an event with id {EventId}", id);
             return null;
         }
 

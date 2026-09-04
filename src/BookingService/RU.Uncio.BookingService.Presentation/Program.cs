@@ -1,18 +1,46 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using RU.Uncio.BookingService.Application.Auxiliary;
+using RU.Uncio.BookingService.Application.Interfaces;
+using RU.Uncio.BookingService.Infrastructure.Auxiliary;
+using RU.Uncio.BookingService.Infrastructure.DataAccess;
 using RU.Uncio.BookingService.Middlewares;
+using RU.Uncio.BookingService.Presentation.Controllers;
+using Serilog;
+using Serilog.Formatting.Compact;
 using System.Reflection;
 using System.Text;
-using RU.Uncio.BookingService.Infrastructure.Auxiliary;
-using RU.Uncio.BookingService.Application.Auxiliary;
-using RU.Uncio.BookingService.Infrastructure.DataAccess;
-using Microsoft.EntityFrameworkCore;
-using RU.Uncio.BookingService.Presentation.Controllers;
-using RU.Uncio.BookingService.Application.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+const string serviceName = "booking-service";
+const string serviceVersion = "1.0.0";
+
+builder.Services
+    .AddOpenApi()
+    .AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(
+            serviceName: serviceName,
+            serviceVersion: serviceVersion))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter(o => o.Endpoint = new Uri(builder.Configuration["Otlp:Endpoint"]!)))
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddPrometheusExporter());
+
+builder.Host.UseSerilog((ctx, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .WriteTo.Console(new CompactJsonFormatter()));
 // Add services to the container.
 
 builder.Services.AddControllers()
@@ -76,6 +104,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.MapPrometheusScrapingEndpoint();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

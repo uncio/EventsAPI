@@ -109,7 +109,7 @@ namespace RU.Uncio.EventService.Presentation.Controllers
             }
             else
             {
-                logger.LogError($"Event with ID {id} is not found in the collection");
+                logger.LogError("Event with ID {EventId} is not found in the collection", id);
                 return NotFound(new ApiResult
                 {
                     Success = false,
@@ -134,8 +134,8 @@ namespace RU.Uncio.EventService.Presentation.Controllers
         {
             if (!ModelState.IsValid)
             {
-                logger.LogError($"Validation failed: {String.Join(";",
-                    ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
+                logger.LogError("Validation failed: {ValidatingProperties}", String.Join(";",
+                    ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>())));
                 throw new ValidationException($"Validation failed: {String.Join(";",
                     ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
             }
@@ -167,8 +167,8 @@ namespace RU.Uncio.EventService.Presentation.Controllers
         {
             if (!ModelState.IsValid)
             {
-                logger.LogError($"Validation failed: {String.Join(";",
-                    ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
+                logger.LogError("Validation failed: {ValidatingProperties}", String.Join(";",
+                    ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>())));
                 throw new ValidationException($"Validation failed: {String.Join(";",
                     ModelState.SelectMany(x => x.Value?.Errors.Select(z => $"{x.Key} : {z.ErrorMessage}") ?? new List<string>()))}");
             }
